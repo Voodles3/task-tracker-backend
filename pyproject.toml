@@ -1,0 +1,28 @@
+[project]
+name = "fastapi-lab"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Voodles3",email = "vaughnjchristman+dev@gmail.com"}
+]
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard] (>=0.129.0,<0.130.0)",
+    "uvicorn (>=0.41.0,<0.42.0)",
+    "httpx (>=0.28.1,<0.29.0)"
+]
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.0.2,<10.0.0)"
+]
+
+[tool.poetry]
+name = "fastapi-lab"
+version = "0.1.0"
+packages = [{ include = "app"}]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
