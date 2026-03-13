@@ -1,9 +1,10 @@
 from fastapi import FastAPI, HTTPException, status
 from app.schemas import Task, TaskCreate, TaskUpdate
 from app.store import Store
+from app.persistence import JSONFileTaskStorage
 
 app = FastAPI()
-store = Store()
+store = Store(storage=JSONFileTaskStorage())
 
 
 """

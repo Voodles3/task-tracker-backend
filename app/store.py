@@ -6,14 +6,18 @@ class Store:
     # So we can only have one Store
     _instance = None
 
-    def __new__(cls):
+    def __new__(cls, *args, **kwargs) -> "Store":
         if cls._instance is None:
             cls._instance = super().__new__(cls)
         return cls._instance
 
-    def __init__(self) -> None:
+    def __init__(self, storage) -> None:
+        if getattr(self, "_initialized", False):
+            return
+        self._initialized = True
         self.tasks: dict[int, Task] = {}
         self._next_id = 1
+        self.storage = storage
 
     def _get_next_id(self) -> int:
         id = self._next_id

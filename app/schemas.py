@@ -1,4 +1,5 @@
 from pydantic import BaseModel
+from abc import ABC, abstractmethod
 
 
 class Task(BaseModel):
@@ -15,3 +16,18 @@ class TaskCreate(BaseModel):
 class TaskUpdate(BaseModel):
     title: str | None = None
     description: str | None = None
+
+
+class JSONSaveData(BaseModel):
+    next_id: int
+    tasks: list[Task]
+
+
+class StorageAdapter(ABC):
+    @abstractmethod
+    def save(self, tasks: list[Task], next_id: int) -> None:
+        raise NotImplementedError()
+
+    @abstractmethod
+    def load(self) -> tuple[list[Task], int]:
+        raise NotImplementedError()
