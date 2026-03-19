@@ -1,33 +1,24 @@
+from logging import getLogger
+from threading import Lock
+
 from app.schemas import (
+    JSONSaveData,
+    StorageAdapter,
+    StorageError,
     Task,
     TaskCreate,
-    TaskUpdate,
-    StorageAdapter,
     TaskStore,
-    JSONSaveData,
+    TaskUpdate,
 )
-from logging import getLogger
 
 logger = getLogger()
 
 
 class Store:
-    # SINGLETON PATTERN
-    # So we can only have one Store
-    _instance = None
-
-    def __new__(cls, *args, **kwargs) -> "Store":
-        if cls._instance is None:
-            cls._instance = super().__new__(cls, *args, **kwargs)
-        return cls._instance
-
     def __init__(self, storage: StorageAdapter) -> None:
-        if getattr(self, "_initialized", False):
-            return
-        self._initialized = True
-
         self._tasks: TaskStore = {}
         self._next_id: int = 1
+        self._lock = Lock()
 
         self._storage = storage
         try:
@@ -37,49 +28,72 @@ class Store:
         except FileNotFoundError:
             logger.info("No save data to load, starting fresh!")
 
-    def _get_next_id_and_increment(self) -> int:
-        id = self._next_id
-        self._next_id += 1
-        return id
-
     def create_task(self, task_create: TaskCreate) -> Task:
-        cached_tasks = self._tasks.copy()
-        cached_next_id = self._next_id
+        """Creates and stores a new Task"""
+        with self._lock:
+            cached_tasks = self._tasks.copy()
+            cached_next_id = self._next_id
 
-        id = self._get_next_id_and_increment()
-        task = Task(**task_create.model_dump(), id=id)
-        self._tasks[id] = task
-        try:
-            self._storage.save(JSONSaveData(next_id=self._next_id, tasks=self._tasks))
+            task_id = self._next_id
+            task = Task(**task_create.model_dump(), id=task_id)
+            self._tasks[task_id] = task
+            try:
+                self._next_id += 1
+                self._storage.save(
+                    JSONSaveData(next_id=self._next_id, tasks=self._tasks)
+                )
+            except Exception as e:
+                # Rollback in-memory storage on a save failure
+                self._tasks = cached_tasks
+                self._next_id = cached_next_id
+                raise StorageError("Error creating new task") from e
+
             return task
-        except Exception as e:
-            self._tasks = cached_tasks
-            self._next_id = cached_next_id
-            raise Exception(f"Error creating new task: {e}")
 
     def get_task_by_id(self, task_id: int) -> Task | None:
-        try:
-            data = self._storage.load()
-            return data.tasks.get(task_id)
-        except FileNotFoundError:
-            return None
+        """Returns a single Task by ID"""
+        with self._lock:
+            task = self._tasks.get(task_id)
+            return task.model_copy() if task is not None else None
 
-    def get_all_tasks(self) -> TaskStore | None:
-        return self._tasks
+    def get_all_tasks(self) -> TaskStore:
+        """Returns a TaskStore dict containing all Tasks."""
+        with self._lock:
+            return {task_id: task.model_copy() for task_id, task in self._tasks.items()}
 
     def update_task(self, task_id: int, task_update: TaskUpdate) -> Task | None:
-        task = self._tasks.get(task_id)
-        if task is None:
-            return None
+        """Updates a Task by ID"""
+        with self._lock:
+            original_task = self._tasks.get(task_id)
+            if original_task is None:
+                return None
 
-        updates = task_update.model_dump(exclude_unset=True)
-        updated_task = task.model_copy(update=updates)
+            updates = task_update.model_dump(exclude_unset=True)
+            updated_task = original_task.model_copy(update=updates)
 
-        self._tasks[task_id] = updated_task
-        return updated_task
+            self._tasks[task_id] = updated_task
+            try:
+                self._storage.save(
+                    JSONSaveData(next_id=self._next_id, tasks=self._tasks)
+                )
+            except Exception as e:
+                self._tasks[task_id] = original_task
+                raise StorageError(f"Error updating task with id {task_id}") from e
+
+            return updated_task
 
     def delete_task(self, task_id: int) -> bool:
-        deleted_task = self._tasks.pop(task_id, None)
-        if deleted_task is None:
-            return False
-        return True
+        """Deletes a single Task. Returns True if successful and False if task does not exist"""
+        with self._lock:
+            original_task = self._tasks.pop(task_id, None)
+            if original_task is None:
+                return False
+
+            try:
+                self._storage.save(
+                    JSONSaveData(next_id=self._next_id, tasks=self._tasks)
+                )
+            except Exception as e:
+                self._tasks[task_id] = original_task
+                raise StorageError("Failed to save task deletion") from e
+            return True

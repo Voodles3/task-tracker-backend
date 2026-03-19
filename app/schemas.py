@@ -1,5 +1,6 @@
-from pydantic import BaseModel
 from abc import ABC, abstractmethod
+
+from pydantic import BaseModel
 
 
 class Task(BaseModel):
@@ -34,3 +35,7 @@ class StorageAdapter(ABC):
     @abstractmethod
     def load(self) -> JSONSaveData:
         raise NotImplementedError()
+
+
+class StorageError(Exception):
+    pass

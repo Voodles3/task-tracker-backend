@@ -6,7 +6,7 @@ async def test_get_all_tasks_starts_empty(client):
     response = await client.get("/tasks")
 
     assert response.status_code == 200
-    assert response.json() == {}
+    assert response.json() == []
 
 
 @pytest.mark.anyio
@@ -38,10 +38,10 @@ async def test_get_all_tasks_returns_created_tasks(client):
     response = await client.get("/tasks")
 
     assert response.status_code == 200
-    assert response.json() == {
-        "1": {"id": 1, "title": "First task", "description": "one"},
-        "2": {"id": 2, "title": "Second task", "description": "two"},
-    }
+    assert response.json() == [
+        {"id": 1, "title": "First task", "description": "one"},
+        {"id": 2, "title": "Second task", "description": "two"},
+    ]
 
 
 @pytest.mark.anyio

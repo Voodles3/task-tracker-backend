@@ -1,4 +1,1 @@
-- Implement save function in JSONFileTaskStorage
-- Update Store to make use of storage param to read and write data
-  - Data needs to survive server restarts
 - Write tests for file IO

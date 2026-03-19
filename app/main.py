@@ -1,15 +1,22 @@
-from fastapi import FastAPI, HTTPException, status
-from app.schemas import Task, TaskCreate, TaskUpdate, TaskStore
-from app.store import Store
+from fastapi import FastAPI, HTTPException, Request, status
+from fastapi.responses import JSONResponse
+
 from app.persistence import JSONFileTaskStorage
+from app.schemas import StorageError, Task, TaskCreate, TaskUpdate
+from app.store import Store
 
 app = FastAPI()
 store = Store(storage=JSONFileTaskStorage())
 
 
 """
-This is a simple Tasks API to practice and learn FastAPI
+This is a simple Tasks API to learn and practice FastAPI
 """
+
+
+@app.exception_handler(StorageError)
+async def storage_error_handler(request: Request, exc: StorageError):
+    return JSONResponse(status_code=500, content={"detail": "Internal storage error"})
 
 
 @app.get("/")
@@ -23,9 +30,9 @@ async def check_health() -> dict[str, str]:
 
 
 @app.get("/tasks")
-async def get_all_tasks() -> TaskStore:
+async def get_all_tasks() -> list[Task]:
     tasks = store.get_all_tasks()
-    return tasks or {}
+    return [task for task in tasks.values()]
 
 
 @app.get("/tasks/{task_id}")
@@ -41,7 +48,6 @@ async def get_task(task_id: int) -> Task:
 
 @app.post("/tasks")
 async def create_task(task: TaskCreate) -> Task:
-    print(type(task))
     return store.create_task(task)
 
 
