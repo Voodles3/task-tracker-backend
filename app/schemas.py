@@ -18,16 +18,19 @@ class TaskUpdate(BaseModel):
     description: str | None = None
 
 
+type TaskStore = dict[int, Task]
+
+
 class JSONSaveData(BaseModel):
     next_id: int
-    tasks: list[Task]
+    tasks: TaskStore
 
 
 class StorageAdapter(ABC):
     @abstractmethod
-    def save(self, tasks: list[Task], next_id: int) -> None:
+    def save(self, data: JSONSaveData) -> None:
         raise NotImplementedError()
 
     @abstractmethod
-    def load(self) -> tuple[list[Task], int]:
+    def load(self) -> JSONSaveData:
         raise NotImplementedError()

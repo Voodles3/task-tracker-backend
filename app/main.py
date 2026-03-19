@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, status
-from app.schemas import Task, TaskCreate, TaskUpdate
+from app.schemas import Task, TaskCreate, TaskUpdate, TaskStore
 from app.store import Store
 from app.persistence import JSONFileTaskStorage
 
@@ -23,8 +23,9 @@ async def check_health() -> dict[str, str]:
 
 
 @app.get("/tasks")
-async def get_all_tasks() -> dict[int, Task]:
-    return store.get_all_tasks()
+async def get_all_tasks() -> TaskStore:
+    tasks = store.get_all_tasks()
+    return tasks or {}
 
 
 @app.get("/tasks/{task_id}")

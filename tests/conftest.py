@@ -6,10 +6,10 @@ from app.main import app, store
 
 @pytest.fixture(autouse=True)
 def reset_store():
-    store.tasks.clear()
+    store._tasks.clear()
     store._next_id = 1
     yield
-    store.tasks.clear()
+    store._tasks.clear()
     store._next_id = 1
 
 
