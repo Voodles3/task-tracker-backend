@@ -1,23 +1,36 @@
-import httpx
+from pathlib import Path
+from typing import AsyncGenerator, Generator
+
 import pytest
+from httpx import AsyncClient
 
-from app.main import app, store
-
-
-@pytest.fixture(autouse=True)
-def reset_store():
-    store._tasks.clear()
-    store._next_id = 1
-    yield
-    store._tasks.clear()
-    store._next_id = 1
+from app.main import create_app
+from tests.helpers import create_test_client
 
 
 @pytest.fixture
-async def client():
-    transport = httpx.ASGITransport(app=app)
-    async with httpx.AsyncClient(
-        transport=transport,
-        base_url="http://testserver",
-    ) as test_client:
+def isolated_file_path(tmp_path) -> Generator[Path, None, None]:
+    path = tmp_path / "temp_tasks.json"
+    yield path
+    path.unlink(missing_ok=True)
+
+
+@pytest.fixture
+def restartable_file_path(tmp_path) -> Path:
+    return tmp_path / "tasks.json"
+
+
+@pytest.fixture
+async def client(isolated_file_path) -> AsyncGenerator[AsyncClient, None]:
+    app = create_app(data_file_path=isolated_file_path)
+    async with create_test_client(app) as test_client:
+        yield test_client
+
+
+@pytest.fixture
+async def persistence_client(
+    restartable_file_path,
+) -> AsyncGenerator[AsyncClient, None]:
+    app = create_app(data_file_path=restartable_file_path)
+    async with create_test_client(app) as test_client:
         yield test_client

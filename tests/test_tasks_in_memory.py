@@ -10,7 +10,7 @@ async def test_get_all_tasks_starts_empty(client):
 
 
 @pytest.mark.anyio
-async def test_create_and_get_task_end_to_end(client):
+async def test_create_and_get_task_in_memory(client):
     create_response = await client.post(
         "/tasks",
         json={"title": "Write tests", "description": "Cover current endpoints"},
@@ -45,7 +45,7 @@ async def test_get_all_tasks_returns_created_tasks(client):
 
 
 @pytest.mark.anyio
-async def test_update_task_end_to_end(client):
+async def test_update_task_in_memory(client):
     await client.post(
         "/tasks", json={"title": "Initial title", "description": "Initial"}
     )
@@ -66,7 +66,7 @@ async def test_update_task_end_to_end(client):
 
 
 @pytest.mark.anyio
-async def test_delete_task_end_to_end(client):
+async def test_delete_task_in_memory(client):
     await client.post("/tasks", json={"title": "Disposable", "description": None})
 
     delete_response = await client.delete("/tasks/1")

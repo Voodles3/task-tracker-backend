@@ -9,9 +9,14 @@ DATA_FILE_PATH = BASE_DIR / "save_data" / "save_data.json"
 
 
 class JSONFileTaskStorage(StorageAdapter):
+    def __init__(self, data_file_path: Path | None = None):
+        self._data_file_path = data_file_path or DATA_FILE_PATH
+
     def save(self, data: JSONSaveData) -> None:
-        DATA_FILE_PATH.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = DATA_FILE_PATH.with_suffix(DATA_FILE_PATH.suffix + ".tmp")
+        self._data_file_path.parent.mkdir(parents=True, exist_ok=True)
+        tmp_path = self._data_file_path.with_suffix(
+            self._data_file_path.suffix + ".tmp"
+        )
 
         payload = JSONSaveData.model_validate(data).model_dump()
         try:
@@ -19,7 +24,7 @@ class JSONFileTaskStorage(StorageAdapter):
                 json.dump(payload, f, indent=2)
                 f.flush()
                 os.fsync(f.fileno())
-            os.replace(tmp_path, DATA_FILE_PATH)
+            os.replace(tmp_path, self._data_file_path)
         except Exception as e:
             raise StorageError("Failed to save data") from e
         finally:
@@ -27,7 +32,7 @@ class JSONFileTaskStorage(StorageAdapter):
 
     def load(self) -> JSONSaveData:
         try:
-            with (DATA_FILE_PATH).open("r", encoding="utf-8") as f:
+            with (self._data_file_path).open("r", encoding="utf-8") as f:
                 raw = json.load(f)
                 return JSONSaveData.model_validate(raw)
 

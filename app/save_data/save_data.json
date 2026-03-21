@@ -1,35 +1,4 @@
 {
-  "next_id": 9,
-  "tasks": {
-    "3": {
-      "id": 3,
-      "title": "Change my sheets",
-      "description": "She asked me to this morning, better do it soon"
-    },
-    "4": {
-      "id": 4,
-      "title": "Change my sheets",
-      "description": "She asked me to this morning, better do it soon"
-    },
-    "5": {
-      "id": 5,
-      "title": "Change my sheets",
-      "description": "She asked me to this morning, better do it soon"
-    },
-    "6": {
-      "id": 6,
-      "title": "Change my sheets",
-      "description": "She asked me to this morning, better do it soon"
-    },
-    "7": {
-      "id": 7,
-      "title": "Change my sheets",
-      "description": "She asked me to this morning, better do it soon"
-    },
-    "8": {
-      "id": 8,
-      "title": "Change my sheets",
-      "description": "She asked me to this morning, better do it soon"
-    }
-  }
+  "next_id": 1,
+  "tasks": {}
 }
