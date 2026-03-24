@@ -72,3 +72,6 @@ def create_app(data_file_path: Path | None = None) -> FastAPI:
             )
 
     return app
+
+
+app = create_app()

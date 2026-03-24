@@ -1,1 +1,19 @@
-- Write tests for file IO
+- Step 1: Task model v2 + real checklist behavior
+- Add task fields: `completed`, `priority`, `due_date`, `created_at`, `updated_at` (`completed_at` optional)
+- Update `TaskCreate` to accept only create-time client fields
+- Update `TaskUpdate` so all fields are optional and PATCH remains partial
+- Make `POST /tasks` return a full task with generated defaults, timestamps, and `201 Created`
+- Make `PATCH /tasks/{task_id}` update `updated_at` and handle completion state changes
+- Keep `DELETE /tasks/{task_id}` behavior as `204` on success and `404` if missing
+- Make persistence load old task JSON safely by filling in defaults for missing fields
+- Save dates and datetimes in JSON-safe ISO format
+- Add tests for create defaults, `updated_at` changes, and `completed_at` behavior if added
+
+- Step 2: Make `GET /tasks` frontend-ready
+- Add optional filters for `completed`, `priority`, `due_before`, and `due_after`
+- Add `q` search across title and description
+- Add sorting with `sort_by` and `order`
+- Add pagination with `limit` and `offset`
+- Keep endpoint thin and move list/query logic into the store/service layer
+- Keep the response as `list[Task]` unless pagination metadata is actually needed
+- Add tests for filtering, search, sorting, and pagination

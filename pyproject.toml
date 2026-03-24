@@ -1,7 +1,7 @@
 [project]
-name = "fastapi-lab"
+name = "task-tracker-backend"
 version = "0.1.0"
-description = ""
+description = "Backend API and logic for my task tracker app project"
 authors = [
     {name = "Voodles3",email = "vaughnjchristman+dev@gmail.com"}
 ]
