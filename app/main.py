@@ -37,7 +37,7 @@ def create_app(data_file_path: Path | None = None) -> FastAPI:
     @app.get("/tasks")
     async def get_all_tasks() -> list[Task]:
         tasks = store.get_all_tasks()
-        return [task for task in tasks.values()]
+        return list(tasks.values())
 
     @app.get("/tasks/{task_id}")
     async def get_task(task_id: int) -> Task:
