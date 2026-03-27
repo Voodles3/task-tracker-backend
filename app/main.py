@@ -63,7 +63,7 @@ def create_app(data_file_path: Path | None = None) -> FastAPI:
             )
         return task
 
-    @app.post("/tasks")
+    @app.post("/tasks", status_code=status.HTTP_201_CREATED)
     async def create_task(task: TaskCreate) -> Task:
         return store.create_task(task)
 

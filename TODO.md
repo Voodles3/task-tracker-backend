@@ -1,12 +1,12 @@
 - Step 1: Task model v2 and checklist behavior
-- Add task fields: `completed`, `priority`, `due_date`, `created_at`, `updated_at` (maybe `completed_at`)
-- Update `TaskCreate` to accept only create-time client fields
-- Update `TaskUpdate` so all fields are optional and PATCH remains partial
+- ✅ Add task fields: `completed`, `priority`, `due_date`, `created_at`, `updated_at` (maybe `completed_at`)
+- ✅ Update `TaskCreate` to accept only create-time client fields
+- ✅ Update `TaskUpdate` so all fields are optional and PATCH remains partial
 - Make `POST /tasks` return a full task with generated defaults, timestamps, and `201 Created`
-- Make `PATCH /tasks/{task_id}` update `updated_at` and handle completion state changes
-- Keep `DELETE /tasks/{task_id}` behavior as `204` on success and `404` if missing
+- ✅ Make `PATCH /tasks/{task_id}` update `updated_at` and handle completion state changes
+- ✅ Keep `DELETE /tasks/{task_id}` behavior as `204` on success and `404` if missing
 - Make persistence load old task JSON safely by filling in defaults for missing fields
-- Save dates and datetimes in JSON-safe ISO format
+- ✅ Save dates and datetimes in JSON-safe ISO format
 - Add tests for create defaults, `updated_at` changes, and `completed_at` behavior if added
 -
 - 
