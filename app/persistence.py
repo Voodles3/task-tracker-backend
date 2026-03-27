@@ -2,7 +2,7 @@ import json
 import os
 from pathlib import Path
 
-from app.schemas import JSONSaveData, StorageAdapter, StorageError
+from app.schemas.storage import JSONSaveData, StorageAdapter, StorageError
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE_PATH = BASE_DIR / "save_data" / "save_data.json"
@@ -18,7 +18,7 @@ class JSONFileTaskStorage(StorageAdapter):
             self._data_file_path.suffix + ".tmp"
         )
 
-        payload = JSONSaveData.model_validate(data).model_dump()
+        payload = JSONSaveData.model_validate(data).model_dump(mode="json")
         try:
             with tmp_path.open("w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=2)

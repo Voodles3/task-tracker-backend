@@ -1,8 +1,11 @@
 import pytest
+from httpx import AsyncClient
+
+from tests.helpers import assert_task_shape
 
 
 @pytest.mark.anyio
-async def test_get_all_tasks_starts_empty(client):
+async def test_get_all_tasks_starts_empty(client: AsyncClient) -> None:
     response = await client.get("/tasks")
 
     assert response.status_code == 200
@@ -10,7 +13,7 @@ async def test_get_all_tasks_starts_empty(client):
 
 
 @pytest.mark.anyio
-async def test_create_and_get_task_in_memory(client):
+async def test_create_and_get_task_in_memory(client: AsyncClient) -> None:
     create_response = await client.post(
         "/tasks",
         json={"title": "Write tests", "description": "Cover current endpoints"},
@@ -18,11 +21,12 @@ async def test_create_and_get_task_in_memory(client):
 
     assert create_response.status_code == 200
     created_task = create_response.json()
-    assert created_task == {
-        "id": 1,
-        "title": "Write tests",
-        "description": "Cover current endpoints",
-    }
+    assert_task_shape(
+        created_task,
+        expected_id=1,
+        expected_title="Write tests",
+        expected_description="Cover current endpoints",
+    )
 
     get_response = await client.get("/tasks/1")
 
@@ -31,21 +35,31 @@ async def test_create_and_get_task_in_memory(client):
 
 
 @pytest.mark.anyio
-async def test_get_all_tasks_returns_created_tasks(client):
+async def test_get_all_tasks_returns_created_tasks(client: AsyncClient) -> None:
     await client.post("/tasks", json={"title": "First task", "description": "one"})
     await client.post("/tasks", json={"title": "Second task", "description": "two"})
 
     response = await client.get("/tasks")
 
     assert response.status_code == 200
-    assert response.json() == [
-        {"id": 1, "title": "First task", "description": "one"},
-        {"id": 2, "title": "Second task", "description": "two"},
-    ]
+    tasks = response.json()
+    assert len(tasks) == 2
+    assert_task_shape(
+        tasks[0],
+        expected_id=1,
+        expected_title="First task",
+        expected_description="one",
+    )
+    assert_task_shape(
+        tasks[1],
+        expected_id=2,
+        expected_title="Second task",
+        expected_description="two",
+    )
 
 
 @pytest.mark.anyio
-async def test_update_task_in_memory(client):
+async def test_update_task_in_memory(client: AsyncClient) -> None:
     await client.post(
         "/tasks", json={"title": "Initial title", "description": "Initial"}
     )
@@ -53,20 +67,24 @@ async def test_update_task_in_memory(client):
     update_response = await client.patch("/tasks/1", json={"description": "Updated"})
 
     assert update_response.status_code == 200
-    assert update_response.json() == {
-        "id": 1,
-        "title": "Initial title",
-        "description": "Updated",
-    }
+    updated_task = update_response.json()
+    assert_task_shape(
+        updated_task,
+        expected_id=1,
+        expected_title="Initial title",
+        expected_description="Updated",
+    )
 
     get_response = await client.get("/tasks/1")
 
     assert get_response.status_code == 200
-    assert get_response.json()["description"] == "Updated"
+    fetched_task = get_response.json()
+    assert fetched_task["description"] == "Updated"
+    assert fetched_task["updated_at"] == updated_task["updated_at"]
 
 
 @pytest.mark.anyio
-async def test_delete_task_in_memory(client):
+async def test_delete_task_in_memory(client: AsyncClient) -> None:
     await client.post("/tasks", json={"title": "Disposable", "description": None})
 
     delete_response = await client.delete("/tasks/1")
@@ -81,7 +99,7 @@ async def test_delete_task_in_memory(client):
 
 
 @pytest.mark.anyio
-async def test_get_task_returns_not_found_for_missing_id(client):
+async def test_get_task_returns_not_found_for_missing_id(client: AsyncClient) -> None:
     response = await client.get("/tasks/999")
 
     assert response.status_code == 404
@@ -89,7 +107,9 @@ async def test_get_task_returns_not_found_for_missing_id(client):
 
 
 @pytest.mark.anyio
-async def test_update_task_returns_not_found_for_missing_id(client):
+async def test_update_task_returns_not_found_for_missing_id(
+    client: AsyncClient,
+) -> None:
     response = await client.patch("/tasks/999", json={"title": "Missing"})
 
     assert response.status_code == 404
@@ -99,7 +119,9 @@ async def test_update_task_returns_not_found_for_missing_id(client):
 
 
 @pytest.mark.anyio
-async def test_delete_task_returns_not_found_for_missing_id(client):
+async def test_delete_task_returns_not_found_for_missing_id(
+    client: AsyncClient,
+) -> None:
     response = await client.delete("/tasks/999")
 
     assert response.status_code == 404

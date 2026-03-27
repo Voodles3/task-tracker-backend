@@ -1,11 +1,15 @@
+from logging import getLogger
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Request, status
 from fastapi.responses import JSONResponse
 
 from app.persistence import JSONFileTaskStorage
-from app.schemas import StorageError, Task, TaskCreate, TaskUpdate
+from app.schemas.storage import StorageError
+from app.schemas.task import Task, TaskCreate, TaskUpdate
 from app.store import Store
+
+logger = getLogger(__name__)
 
 """
 This is a simple Tasks API to learn and practice FastAPI
@@ -13,21 +17,31 @@ This is a simple Tasks API to learn and practice FastAPI
 
 
 def create_app(data_file_path: Path | None = None) -> FastAPI:
-    ### App config
+    ### App config ###
     app = FastAPI()
     store = Store(storage=JSONFileTaskStorage(data_file_path))
 
-    ### ------------------- ###
-
-    ### Endpoints
+    ### Endpoints ###
     @app.exception_handler(StorageError)
-    async def storage_error_handler(request: Request, exc: StorageError):
-        return JSONResponse(
-            status_code=500, content={"detail": "Internal storage error"}
+    async def storage_error_handler(
+        request: Request, exc: StorageError
+    ) -> JSONResponse:
+        logger.exception(
+            f"Storage error while handling {request.url.path}",
+            exc_info=exc,
         )
 
+        content = {"detail": "Internal storage error"}
+
+        if app.debug:
+            content["error"] = str(exc)
+            if exc.__cause__ is not None:
+                content["cause"] = str(exc.__cause__)
+
+        return JSONResponse(status_code=500, content=content)
+
     @app.get("/")
-    async def root():
+    async def root() -> dict[str, bool]:
         return {"You are at root": True}
 
     @app.get("/health")

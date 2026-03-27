@@ -3,7 +3,7 @@ import json
 import pytest
 
 from app.main import create_app
-from tests.helpers import create_test_client
+from tests.helpers import assert_task_shape, create_test_client
 
 
 def build_restarted_client(persistence_file_path):
@@ -25,11 +25,12 @@ async def test_create_task_persists_between_sessions(
         get_response = await restarted_client.get("/tasks/1")
 
     assert get_response.status_code == 200
-    assert get_response.json() == {
-        "id": 1,
-        "title": "Write tests",
-        "description": "persist me",
-    }
+    assert_task_shape(
+        get_response.json(),
+        expected_id=1,
+        expected_title="Write tests",
+        expected_description="persist me",
+    )
 
 
 @pytest.mark.anyio
@@ -52,11 +53,12 @@ async def test_updated_task_persists_between_sessions(
         get_response = await restarted_client.get("/tasks/1")
 
     assert get_response.status_code == 200
-    assert get_response.json() == {
-        "id": 1,
-        "title": "Updated title",
-        "description": "Updated description",
-    }
+    assert_task_shape(
+        get_response.json(),
+        expected_id=1,
+        expected_title="Updated title",
+        expected_description="Updated description",
+    )
 
 
 @pytest.mark.anyio
@@ -100,11 +102,12 @@ async def test_next_id_continues_after_restart(
         )
 
     assert create_response.status_code == 200
-    assert create_response.json() == {
-        "id": 3,
-        "title": "Third",
-        "description": "three",
-    }
+    assert_task_shape(
+        create_response.json(),
+        expected_id=3,
+        expected_title="Third",
+        expected_description="three",
+    )
 
 
 @pytest.mark.anyio
@@ -120,14 +123,12 @@ async def test_create_task_writes_expected_json_file(
     assert restartable_file_path.exists()
 
     saved_payload = json.loads(restartable_file_path.read_text(encoding="utf-8"))
+    task = saved_payload["tasks"]["1"]
 
-    assert saved_payload == {
-        "next_id": 2,
-        "tasks": {
-            "1": {
-                "id": 1,
-                "title": "Persisted task",
-                "description": "written to disk",
-            }
-        },
-    }
+    assert saved_payload["next_id"] == 2
+    assert_task_shape(
+        task,
+        expected_id=1,
+        expected_title="Persisted task",
+        expected_description="written to disk",
+    )

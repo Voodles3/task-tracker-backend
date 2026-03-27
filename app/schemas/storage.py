@@ -2,24 +2,13 @@ from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
 
-
-class Task(BaseModel):
-    id: int
-    title: str
-    description: str | None = None
-
-
-class TaskCreate(BaseModel):
-    title: str
-    description: str | None = None
-
-
-class TaskUpdate(BaseModel):
-    title: str | None = None
-    description: str | None = None
-
+from app.schemas.task import Task
 
 type TaskStore = dict[int, Task]
+
+
+class StorageError(Exception):
+    pass
 
 
 class JSONSaveData(BaseModel):
@@ -35,7 +24,3 @@ class StorageAdapter(ABC):
     @abstractmethod
     def load(self) -> JSONSaveData:
         raise NotImplementedError()
-
-
-class StorageError(Exception):
-    pass

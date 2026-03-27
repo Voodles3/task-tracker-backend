@@ -1,13 +1,16 @@
+from datetime import UTC, datetime
 from logging import getLogger
 from threading import Lock
 
-from app.schemas import (
+from app.schemas.storage import (
     JSONSaveData,
     StorageAdapter,
     StorageError,
+    TaskStore,
+)
+from app.schemas.task import (
     Task,
     TaskCreate,
-    TaskStore,
     TaskUpdate,
 )
 
@@ -35,7 +38,13 @@ class Store:
             cached_next_id = self._next_id
 
             task_id = self._next_id
-            task = Task(**task_create.model_dump(), id=task_id)
+            now = datetime.now(UTC)
+            task = Task(
+                **task_create.model_dump(),
+                id=task_id,
+                created_at=now,
+                updated_at=now,
+            )
             self._tasks[task_id] = task
             try:
                 self._next_id += 1
@@ -68,7 +77,15 @@ class Store:
             if original_task is None:
                 return None
 
+            now = datetime.now(UTC)
             updates = task_update.model_dump(exclude_unset=True)
+            updates["updated_at"] = now
+
+            if updates.get("completed") is True and original_task.completed is False:
+                updates["completed_at"] = now
+            if updates.get("completed") is False:
+                updates["completed_at"] = None
+
             updated_task = original_task.model_copy(update=updates)
 
             self._tasks[task_id] = updated_task
