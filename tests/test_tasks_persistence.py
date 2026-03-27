@@ -85,6 +85,41 @@ async def test_deleted_task_stays_deleted_between_sessions(
 
 
 @pytest.mark.anyio
+async def test_delete_all_tasks_stays_deleted_between_sessions(
+    persistence_client, restartable_file_path
+):
+    await persistence_client.post(
+        "/tasks",
+        json={"title": "First", "description": "one"},
+    )
+    await persistence_client.post(
+        "/tasks",
+        json={"title": "Second", "description": "two"},
+    )
+
+    delete_response = await persistence_client.delete("/tasks")
+
+    assert delete_response.status_code == 204
+
+    async with build_restarted_client(restartable_file_path) as restarted_client:
+        list_response = await restarted_client.get("/tasks")
+        create_response = await restarted_client.post(
+            "/tasks",
+            json={"title": "Third", "description": "three"},
+        )
+
+    assert list_response.status_code == 200
+    assert list_response.json() == []
+    assert create_response.status_code == 200
+    assert_task_shape(
+        create_response.json(),
+        expected_id=3,
+        expected_title="Third",
+        expected_description="three",
+    )
+
+
+@pytest.mark.anyio
 async def test_next_id_continues_after_restart(
     persistence_client, restartable_file_path
 ):

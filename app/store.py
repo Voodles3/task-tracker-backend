@@ -114,3 +114,17 @@ class Store:
                 self._tasks[task_id] = original_task
                 raise StorageError("Failed to save task deletion") from e
             return True
+
+    def delete_all_tasks(self) -> bool:
+        with self._lock:
+            original_tasks = self._tasks.copy()
+            self._tasks.clear()
+
+            try:
+                self._storage.save(
+                    JSONSaveData(next_id=self._next_id, tasks=self._tasks)
+                )
+            except Exception as e:
+                self._tasks = original_tasks
+                raise StorageError("Failed to save all tasks deletion") from e
+            return True

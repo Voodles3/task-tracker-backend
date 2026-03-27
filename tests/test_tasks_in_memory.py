@@ -99,6 +99,22 @@ async def test_delete_task_in_memory(client: AsyncClient) -> None:
 
 
 @pytest.mark.anyio
+async def test_delete_all_tasks_in_memory(client: AsyncClient) -> None:
+    await client.post("/tasks", json={"title": "First", "description": "one"})
+    await client.post("/tasks", json={"title": "Second", "description": "two"})
+
+    delete_response = await client.delete("/tasks")
+
+    assert delete_response.status_code == 204
+    assert delete_response.content == b""
+
+    list_response = await client.get("/tasks")
+
+    assert list_response.status_code == 200
+    assert list_response.json() == []
+
+
+@pytest.mark.anyio
 async def test_get_task_returns_not_found_for_missing_id(client: AsyncClient) -> None:
     response = await client.get("/tasks/999")
 

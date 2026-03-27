@@ -77,6 +77,10 @@ def create_app(data_file_path: Path | None = None) -> FastAPI:
             )
         return task
 
+    @app.delete("/tasks", status_code=status.HTTP_204_NO_CONTENT)
+    async def delete_all_tasks() -> None:
+        store.delete_all_tasks()
+
     @app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_task(task_id: int) -> None:
         if not store.delete_task(task_id):

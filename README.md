@@ -46,6 +46,7 @@ Routes:
 - `GET /tasks/{task_id}`
 - `POST /tasks`
 - `PATCH /tasks/{task_id}`
+- `DELETE /tasks`
 - `DELETE /tasks/{task_id}`
 
 Each task looks like this:
@@ -92,6 +93,12 @@ Delete a task:
 
 ```bash
 curl -X DELETE http://127.0.0.1:8000/tasks/1
+```
+
+Delete all tasks:
+
+```bash
+curl -X DELETE http://127.0.0.1:8000/tasks
 ```
 
 ## Tests
