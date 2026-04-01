@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from app.db.repository import TaskRepository
 from app.models.task import Task, TaskCreate, TaskUpdate
 
-logger = getLogger()
+logger = getLogger(__name__)
 
 
 def create_task_router(

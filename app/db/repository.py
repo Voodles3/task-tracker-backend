@@ -14,7 +14,7 @@ from app.models.task import (
     TaskUpdate,
 )
 
-logger = getLogger()
+logger = getLogger(__name__)
 
 
 class TaskRepository:
