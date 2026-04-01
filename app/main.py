@@ -4,13 +4,12 @@ from pathlib import Path
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
 
-from app.persistence import JSONFileTaskStorage
-from app.routes.tasks import router as task_router
-from app.schemas.app import AppState
-from app.schemas.storage import StorageError
-from app.store import Store
+from app.api.v1.task import create_task_router
+from app.db.repository import TaskRepository
+from app.db.storage import JSONFileTaskStorage
+from app.models.storage import StorageError
 
-logger = getLogger(__name__)
+logger = getLogger()
 
 """
 This is a simple Tasks API to learn and practice FastAPI
@@ -19,9 +18,10 @@ This is a simple Tasks API to learn and practice FastAPI
 
 def create_app(data_file_path: Path | None = None) -> FastAPI:
     app = FastAPI()
-    app.include_router(task_router)
-    store = Store(storage=JSONFileTaskStorage(data_file_path))
-    app.state.container = AppState(store=store)
+
+    storage = JSONFileTaskStorage(data_file_path=data_file_path)
+    session = TaskRepository(storage=storage)
+    app.include_router(create_task_router(session=session))
 
     @app.exception_handler(StorageError)
     async def storage_error_handler(

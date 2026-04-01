@@ -5,5 +5,5 @@ __pycache__/
 *.py[cod]
 htmlcov/
 .coverage
-**/save_data.json
+**/save_data/
 .codex

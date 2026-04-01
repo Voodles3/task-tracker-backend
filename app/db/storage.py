@@ -2,14 +2,18 @@ import json
 import os
 from pathlib import Path
 
-from app.schemas.storage import JSONSaveData, StorageAdapter, StorageError
+from app.models.storage import (
+    JSONSaveData,
+    StorageAdapter,
+    StorageError,
+)
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_FILE_PATH = BASE_DIR / "save_data" / "save_data.json"
 
 
 class JSONFileTaskStorage(StorageAdapter):
-    def __init__(self, data_file_path: Path | None = None):
+    def __init__(self, data_file_path: Path | None = None) -> None:
         self._data_file_path = data_file_path or DATA_FILE_PATH
 
     def save(self, data: JSONSaveData) -> None:

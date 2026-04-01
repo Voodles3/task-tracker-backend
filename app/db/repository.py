@@ -2,13 +2,13 @@ from datetime import UTC, datetime
 from logging import getLogger
 from threading import Lock
 
-from app.schemas.storage import (
+from app.models.storage import (
     JSONSaveData,
     StorageAdapter,
     StorageError,
-    TaskStore,
+    TaskMap,
 )
-from app.schemas.task import (
+from app.models.task import (
     Task,
     TaskCreate,
     TaskUpdate,
@@ -17,9 +17,9 @@ from app.schemas.task import (
 logger = getLogger()
 
 
-class Store:
+class TaskRepository:
     def __init__(self, storage: StorageAdapter) -> None:
-        self._tasks: TaskStore = {}
+        self._tasks: TaskMap = {}
         self._next_id: int = 1
         self._lock = Lock()
 
@@ -65,7 +65,7 @@ class Store:
             task = self._tasks.get(task_id)
             return task.model_copy() if task is not None else None
 
-    def get_all_tasks(self) -> TaskStore:
+    def get_all_tasks(self) -> TaskMap:
         """Returns a TaskStore dict containing all Tasks."""
         with self._lock:
             return {task_id: task.model_copy() for task_id, task in self._tasks.items()}
@@ -116,6 +116,7 @@ class Store:
             return True
 
     def delete_all_tasks(self) -> bool:
+        """Deletes all Tasks. Returns True if successful."""
         with self._lock:
             original_tasks = self._tasks.copy()
             self._tasks.clear()

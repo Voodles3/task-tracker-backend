@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 
 from pydantic import BaseModel
 
-from app.schemas.task import Task
+from app.models.task import Task
 
-type TaskStore = dict[int, Task]
+type TaskMap = dict[int, Task]
 
 
 class StorageError(Exception):
@@ -13,7 +13,7 @@ class StorageError(Exception):
 
 class JSONSaveData(BaseModel):
     next_id: int
-    tasks: TaskStore
+    tasks: TaskMap
 
 
 class StorageAdapter(ABC):
