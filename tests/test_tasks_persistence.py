@@ -62,6 +62,39 @@ async def test_updated_task_persists_between_sessions(
 
 
 @pytest.mark.anyio
+async def test_completed_at_persists_between_sessions(
+    persistence_client, restartable_file_path
+) -> None:
+    await persistence_client.post(
+        "/api/v1/tasks/",
+        json={"title": "Complete me", "description": "persist completion"},
+    )
+
+    complete_response = await persistence_client.patch(
+        "/api/v1/tasks/1",
+        json={"completed": True},
+    )
+
+    assert complete_response.status_code == 200
+    completed_task = complete_response.json()
+    assert completed_task["completed"] is True
+    assert completed_task["completed_at"] is not None
+
+    async with build_restarted_client(restartable_file_path) as restarted_client:
+        get_response = await restarted_client.get("/api/v1/tasks/1")
+
+    assert get_response.status_code == 200
+    assert_task_shape(
+        get_response.json(),
+        expected_id=1,
+        expected_title="Complete me",
+        expected_description="persist completion",
+        expected_completed=True,
+        expected_completed_at=completed_task["completed_at"],
+    )
+
+
+@pytest.mark.anyio
 async def test_deleted_task_stays_deleted_between_sessions(
     persistence_client, restartable_file_path
 ):

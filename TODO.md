@@ -6,7 +6,7 @@
 - ✅ Make `PATCH /tasks/{task_id}` update `updated_at` and handle completion state changes
 - ✅ Keep `DELETE /tasks/{task_id}` behavior as `204` on success and `404` if missing
 - ✅ Save dates and datetimes in JSON-safe ISO format
-- Add tests for create defaults, `updated_at` changes, and `completed_at` behavior if added
+- ✅ Add tests for create defaults, `updated_at` changes, and `completed_at` behavior
 -
 - 
 - Step 2: Make `GET /tasks` frontend-ready

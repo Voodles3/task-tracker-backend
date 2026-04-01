@@ -90,6 +90,38 @@ async def test_update_task_in_memory(client: AsyncClient) -> None:
 
 
 @pytest.mark.anyio
+async def test_complete_and_reopen_task_updates_completed_at(client: AsyncClient) -> None:
+    create_response = await client.post(
+        "/api/v1/tasks/",
+        json={"title": "Checklist item", "description": "toggle me"},
+    )
+
+    assert create_response.status_code == 201
+    assert_task_shape(
+        create_response.json(),
+        expected_id=1,
+        expected_title="Checklist item",
+        expected_description="toggle me",
+    )
+
+    complete_response = await client.patch("/api/v1/tasks/1", json={"completed": True})
+
+    assert complete_response.status_code == 200
+    completed_task = complete_response.json()
+    assert completed_task["completed"] is True
+    assert completed_task["completed_at"] is not None
+    assert completed_task["updated_at"] >= completed_task["created_at"]
+
+    reopen_response = await client.patch("/api/v1/tasks/1", json={"completed": False})
+
+    assert reopen_response.status_code == 200
+    reopened_task = reopen_response.json()
+    assert reopened_task["completed"] is False
+    assert reopened_task["completed_at"] is None
+    assert reopened_task["updated_at"] >= completed_task["updated_at"]
+
+
+@pytest.mark.anyio
 async def test_delete_task_in_memory(client: AsyncClient) -> None:
     await client.post(
         "/api/v1/tasks/", json={"title": "Disposable", "description": None}
