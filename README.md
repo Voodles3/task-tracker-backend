@@ -4,6 +4,13 @@ A small FastAPI backend for a task tracker app.
 
 Exposes a simple JSON API for creating, reading, updating, and deleting tasks, then persists that data to a local JSON file.
 
+Current structure is split into:
+
+- `app/api`: FastAPI route definitions
+- `app/db`: repository and storage layers
+- `app/models`: Pydantic request/response models
+- `app/core`: app configuration and logging
+
 ## Stack
 
 - Python 3.12+
@@ -27,6 +34,10 @@ poetry install
 ```bash
 poetry run uvicorn app.main:create_app --factory --reload
 ```
+OR
+```bash
+fastapi dev
+```
 
 Then open:
 
@@ -34,20 +45,19 @@ Then open:
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
-By default, task data is stored at `app/save_data/save_data.json`.
+By default, task data is stored at `app/save_data/tasks.json`.
 
 ## API
 
 Routes:
 
-- `GET /`
-- `GET /health`
-- `GET /tasks`
-- `GET /tasks/{task_id}`
-- `POST /tasks`
-- `PATCH /tasks/{task_id}`
-- `DELETE /tasks`
-- `DELETE /tasks/{task_id}`
+- `GET /api/v1/tasks/health`
+- `GET /api/v1/tasks/`
+- `GET /api/v1/tasks/{task_id}`
+- `POST /api/v1/tasks/`
+- `PATCH /api/v1/tasks/{task_id}`
+- `DELETE /api/v1/tasks/`
+- `DELETE /api/v1/tasks/{task_id}`
 
 Each task looks like this:
 
@@ -55,13 +65,21 @@ Each task looks like this:
 {
   "id": 1,
   "title": "Write README",
-  "description": "Trim the docs down"
+  "description": "Trim the docs down",
+  "priority": "UNSET",
+  "completed": false,
+  "due_date": null,
+  "completed_at": null,
+  "created_at": "2026-03-31T12:00:00Z",
+  "updated_at": "2026-03-31T12:00:00Z"
 }
 ```
 
 Notes:
 
 - `description` is optional
+- `priority` defaults to `UNSET`
+- `completed` defaults to `false`
 - missing tasks return `404`
 - storage failures return `500`
 
@@ -70,7 +88,7 @@ Notes:
 Create a task:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/tasks \
+curl -X POST http://127.0.0.1:8000/api/v1/tasks/ \
   -H "Content-Type: application/json" \
   -d '{"title":"Write README","description":"Trim the docs down"}'
 ```
@@ -78,13 +96,13 @@ curl -X POST http://127.0.0.1:8000/tasks \
 List tasks:
 
 ```bash
-curl http://127.0.0.1:8000/tasks
+curl http://127.0.0.1:8000/api/v1/tasks/
 ```
 
 Update a task:
 
 ```bash
-curl -X PATCH http://127.0.0.1:8000/tasks/1 \
+curl -X PATCH http://127.0.0.1:8000/api/v1/tasks/1 \
   -H "Content-Type: application/json" \
   -d '{"title":"Write a shorter README"}'
 ```
@@ -92,13 +110,13 @@ curl -X PATCH http://127.0.0.1:8000/tasks/1 \
 Delete a task:
 
 ```bash
-curl -X DELETE http://127.0.0.1:8000/tasks/1
+curl -X DELETE http://127.0.0.1:8000/api/v1/tasks/1
 ```
 
 Delete all tasks:
 
 ```bash
-curl -X DELETE http://127.0.0.1:8000/tasks
+curl -X DELETE http://127.0.0.1:8000/api/v1/tasks/
 ```
 
 ## Tests

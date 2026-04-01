@@ -16,22 +16,22 @@ def create_task_router(
     def get_task_repository() -> TaskRepository:
         return session
 
-    @router.get("/health")
+    @router.get("/health", response_model=dict[str, str])
     async def check_health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @router.get("/")
+    @router.get("/", response_model=list[Task])
     async def get_all_tasks(
-        service: TaskRepository = Depends(get_task_repository),
+        repo: TaskRepository = Depends(get_task_repository),
     ) -> list[Task]:
-        tasks = service.get_all_tasks()
+        tasks = repo.get_all_tasks()
         return list(tasks.values())
 
-    @router.get("/{task_id}")
+    @router.get("/{task_id}", response_model=Task)
     async def get_task(
-        task_id: int, service: TaskRepository = Depends(get_task_repository)
+        task_id: int, repo: TaskRepository = Depends(get_task_repository)
     ) -> Task:
-        task = service.get_task_by_id(task_id)
+        task = repo.get_task_by_id(task_id)
         if task is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -39,19 +39,19 @@ def create_task_router(
             )
         return task
 
-    @router.post("/", status_code=status.HTTP_201_CREATED)
+    @router.post("/", status_code=status.HTTP_201_CREATED, response_model=Task)
     async def create_task(
-        task: TaskCreate, service: TaskRepository = Depends(get_task_repository)
+        task: TaskCreate, repo: TaskRepository = Depends(get_task_repository)
     ) -> Task:
-        return service.create_task(task)
+        return repo.create_task(task)
 
-    @router.patch("/{task_id}")
+    @router.patch("/{task_id}", response_model=Task)
     async def update_task(
         task_id: int,
         task_update: TaskUpdate,
-        service: TaskRepository = Depends(get_task_repository),
+        repo: TaskRepository = Depends(get_task_repository),
     ) -> Task:
-        task = service.update_task(task_id, task_update)
+        task = repo.update_task(task_id, task_update)
         if task is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -61,15 +61,15 @@ def create_task_router(
 
     @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_all_tasks(
-        service: TaskRepository = Depends(get_task_repository),
+        repo: TaskRepository = Depends(get_task_repository),
     ) -> None:
-        service.delete_all_tasks()
+        repo.delete_all_tasks()
 
     @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_task(
-        task_id: int, service: TaskRepository = Depends(get_task_repository)
+        task_id: int, repo: TaskRepository = Depends(get_task_repository)
     ) -> None:
-        if not service.delete_task(task_id):
+        if not repo.delete_task(task_id):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Cannot delete task with id {task_id}: task not found",
