@@ -2,19 +2,17 @@ import json
 import os
 from pathlib import Path
 
+from app.core.config import config
 from app.models.storage import (
     JSONSaveData,
     StorageAdapter,
     StorageError,
 )
 
-BASE_DIR = Path(__file__).resolve().parent
-DATA_FILE_PATH = BASE_DIR / "save_data" / "save_data.json"
-
 
 class JSONFileTaskStorage(StorageAdapter):
     def __init__(self, data_file_path: Path | None = None) -> None:
-        self._data_file_path = data_file_path or DATA_FILE_PATH
+        self._data_file_path = data_file_path or config.data_file_path
 
     def save(self, data: JSONSaveData) -> None:
         self._data_file_path.parent.mkdir(parents=True, exist_ok=True)
@@ -41,6 +39,6 @@ class JSONFileTaskStorage(StorageAdapter):
                 return JSONSaveData.model_validate(raw)
 
         except FileNotFoundError:
-            raise FileNotFoundError("Save file not found") from None
+            raise FileNotFoundError("Save file not found")
         except json.JSONDecodeError as e:
             raise StorageError("Error decoding save file JSON") from e
