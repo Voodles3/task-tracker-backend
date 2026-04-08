@@ -1,8 +1,8 @@
 # Task Tracker Backend
 
-A small FastAPI backend for a task tracker app.
+This is a small FastAPI backend for a task tracker app.
 
-Exposes a simple JSON API for creating, reading, updating, and deleting tasks, then persists that data to a local JSON file.
+It exposes a simple JSON API for creating, reading, updating, and deleting tasks, then persists that data to a local JSON file.
 
 Current structure is split into:
 
@@ -47,7 +47,7 @@ Then open:
 
 By default, task data is stored at `app/save_data/tasks.json`.
 
-## API
+## API Structure
 
 Routes:
 
@@ -83,7 +83,7 @@ Notes:
 - missing tasks return `404`
 - storage failures return `500`
 
-## Quick Examples
+## Examples
 
 Create a task:
 
