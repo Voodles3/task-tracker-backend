@@ -8,3 +8,4 @@ htmlcov/
 **/save_data/
 **/data/
 .codex
+.ruff_cache
