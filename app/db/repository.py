@@ -101,7 +101,7 @@ class TaskRepository:
 
         due_date = task.due_date
         if due_date is None:
-            return True
+            return due_before is None and due_after is None
 
         if due_before is not None and due_date >= due_before:
             return False
@@ -120,12 +120,12 @@ class TaskRepository:
             now = datetime.now(UTC)
             updates = task_update.model_dump(exclude_unset=True)
             updates["updated_at"] = now
-            due_utc = (
-                updates["due_date"].astimezone(UTC)
-                if updates.get("due_date") is not None
-                else None
-            )
-            updates["due_date"] = due_utc
+            if "due_date" in updates:
+                updates["due_date"] = (
+                    updates["due_date"].astimezone(UTC)
+                    if updates["due_date"] is not None
+                    else None
+                )
 
             if updates.get("completed") is True and original_task.completed is False:
                 updates["completed_at"] = now

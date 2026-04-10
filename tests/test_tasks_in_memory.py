@@ -4,6 +4,37 @@ from httpx import AsyncClient
 from tests.helpers import assert_task_shape
 
 
+async def _seed_query_param_tasks(client: AsyncClient) -> None:
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Completed high",
+            "description": "done and high priority",
+            "priority": "HIGH",
+            "due_date": "2026-01-01T00:00:00Z",
+        },
+    )
+    await client.patch("/api/v1/tasks/1", json={"completed": True})
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Open low",
+            "description": "open and low priority",
+            "priority": "LOW",
+            "due_date": "2026-02-01T00:00:00Z",
+        },
+    )
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Open high later",
+            "description": "open and high priority with later due date",
+            "priority": "HIGH",
+            "due_date": "2026-03-01T00:00:00Z",
+        },
+    )
+
+
 @pytest.mark.anyio
 async def test_get_all_tasks_starts_empty(client: AsyncClient) -> None:
     response = await client.get("/api/v1/tasks/")
@@ -63,6 +94,137 @@ async def test_get_all_tasks_returns_created_tasks(client: AsyncClient) -> None:
 
 
 @pytest.mark.anyio
+async def test_get_all_tasks_filters_by_completed_query_param(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+
+    response = await client.get("/api/v1/tasks/", params={"completed": "true"})
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert len(tasks) == 1
+    assert tasks[0]["id"] == 1
+    assert tasks[0]["title"] == "Completed high"
+    assert tasks[0]["completed"] is True
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_filters_by_priority_query_param(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+
+    response = await client.get("/api/v1/tasks/", params={"priority": "HIGH"})
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert [task["id"] for task in tasks] == [1, 3]
+    assert [task["priority"] for task in tasks] == ["HIGH", "HIGH"]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_filters_by_due_before_query_param(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+
+    response = await client.get(
+        "/api/v1/tasks/",
+        params={"due_before": "2026-02-15T00:00:00Z"},
+    )
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert [task["id"] for task in tasks] == [1, 2]
+    assert [task["title"] for task in tasks] == ["Completed high", "Open low"]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_filters_by_due_after_query_param(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+
+    response = await client.get(
+        "/api/v1/tasks/",
+        params={"due_after": "2026-02-15T00:00:00Z"},
+    )
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert [task["id"] for task in tasks] == [3]
+    assert [task["title"] for task in tasks] == ["Open high later"]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_excludes_tasks_without_due_date_when_due_filter_is_used(
+    client: AsyncClient,
+) -> None:
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "No due date",
+            "description": "should not pass due-date filters",
+            "priority": "MEDIUM",
+        },
+    )
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Has due date",
+            "description": "should pass due-date filters",
+            "priority": "MEDIUM",
+            "due_date": "2026-04-01T00:00:00Z",
+        },
+    )
+
+    response = await client.get(
+        "/api/v1/tasks/",
+        params={"due_after": "2026-01-01T00:00:00Z"},
+    )
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert [task["id"] for task in tasks] == [2]
+    assert [task["title"] for task in tasks] == ["Has due date"]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_rejects_invalid_priority_query_param(
+    client: AsyncClient,
+) -> None:
+    response = await client.get("/api/v1/tasks/", params={"priority": "INVALID"})
+
+    assert response.status_code == 422
+    assert response.json()["detail"]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_applies_multiple_query_params_together(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+
+    response = await client.get(
+        "/api/v1/tasks/",
+        params={
+            "completed": "false",
+            "priority": "HIGH",
+            "due_after": "2026-02-15T00:00:00Z",
+        },
+    )
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert len(tasks) == 1
+    assert tasks[0]["id"] == 3
+    assert tasks[0]["title"] == "Open high later"
+    assert tasks[0]["completed"] is False
+    assert tasks[0]["priority"] == "HIGH"
+
+
+@pytest.mark.anyio
 async def test_update_task_in_memory(client: AsyncClient) -> None:
     await client.post(
         "/api/v1/tasks/", json={"title": "Initial title", "description": "Initial"}
@@ -90,7 +252,9 @@ async def test_update_task_in_memory(client: AsyncClient) -> None:
 
 
 @pytest.mark.anyio
-async def test_complete_and_reopen_task_updates_completed_at(client: AsyncClient) -> None:
+async def test_complete_and_reopen_task_updates_completed_at(
+    client: AsyncClient,
+) -> None:
     create_response = await client.post(
         "/api/v1/tasks/",
         json={"title": "Checklist item", "description": "toggle me"},
@@ -119,6 +283,36 @@ async def test_complete_and_reopen_task_updates_completed_at(client: AsyncClient
     assert reopened_task["completed"] is False
     assert reopened_task["completed_at"] is None
     assert reopened_task["updated_at"] >= completed_task["updated_at"]
+
+
+@pytest.mark.anyio
+async def test_updating_completed_does_not_clear_existing_due_date(
+    client: AsyncClient,
+) -> None:
+    create_response = await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Preserve due date",
+            "description": "toggle completion only",
+            "due_date": "2026-05-01T00:00:00Z",
+        },
+    )
+
+    assert create_response.status_code == 201
+    created_task = create_response.json()
+    assert created_task["due_date"] == "2026-05-01T00:00:00Z"
+
+    complete_response = await client.patch("/api/v1/tasks/1", json={"completed": True})
+
+    assert complete_response.status_code == 200
+    completed_task = complete_response.json()
+    assert completed_task["due_date"] == "2026-05-01T00:00:00Z"
+
+    reopen_response = await client.patch("/api/v1/tasks/1", json={"completed": False})
+
+    assert reopen_response.status_code == 200
+    reopened_task = reopen_response.json()
+    assert reopened_task["due_date"] == "2026-05-01T00:00:00Z"
 
 
 @pytest.mark.anyio
