@@ -34,6 +34,21 @@ def test_storage_load_raises_storage_error_for_malformed_json(tmp_path: Path) ->
         storage.load()
 
 
+def test_storage_uses_config_default_path_when_none_is_provided(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    default_file_path = tmp_path / "data" / "tasks.json"
+    monkeypatch.setattr("app.db.storage.config.data_file_path", default_file_path)
+
+    storage = JSONFileTaskStorage()
+    empty_tasks: TaskMap = {}
+    payload = JSONSaveData(next_id=1, tasks=empty_tasks)
+
+    storage.save(payload)
+
+    assert default_file_path.exists()
+
+
 @pytest.mark.anyio
 async def test_app_returns_500_on_storage_error(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch

@@ -45,7 +45,12 @@ Then open:
 - Swagger UI: `http://127.0.0.1:8000/docs`
 - ReDoc: `http://127.0.0.1:8000/redoc`
 
-By default, task data is stored at `app/save_data/tasks.json`.
+By default, task data is stored at `data/tasks.json`.
+You can override this with an environment variable:
+
+```bash
+DATA_FILE_PATH=/absolute/path/tasks.json
+```
 
 ## API Structure
 
