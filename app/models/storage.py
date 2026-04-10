@@ -19,8 +19,8 @@ class JSONSaveData(BaseModel):
 class StorageAdapter(ABC):
     @abstractmethod
     def save(self, data: JSONSaveData) -> None:
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
 
     @abstractmethod
     def load(self) -> JSONSaveData:
-        raise NotImplementedError()
+        raise NotImplementedError()  # pragma: no cover
