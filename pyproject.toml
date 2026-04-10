@@ -18,7 +18,7 @@ dev = [
 ]
 
 [tool.poetry]
-name = "fastapi-lab"
+name = "task-tracker-backend"
 version = "0.1.0"
 packages = [{ include = "app"}]
 
