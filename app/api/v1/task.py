@@ -3,7 +3,7 @@ from logging import getLogger
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.db.repository import TaskRepository
-from app.models.task import Task, TaskCreate, TaskUpdate
+from app.models.task import Task, TaskCreate, TaskQueryParams, TaskUpdate
 
 logger = getLogger(__name__)
 
@@ -22,9 +22,10 @@ def create_task_router(
 
     @router.get("/", response_model=list[Task])
     async def get_all_tasks(
+        query_params: TaskQueryParams = Depends(),
         repo: TaskRepository = Depends(get_task_repository),
     ) -> list[Task]:
-        tasks = repo.get_all_tasks()
+        tasks = repo.get_all_tasks(query_params)
         return list(tasks.values())
 
     @router.get("/{task_id}", response_model=Task)

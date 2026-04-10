@@ -11,6 +11,7 @@ from app.models.storage import (
 from app.models.task import (
     Task,
     TaskCreate,
+    TaskQueryParams,
     TaskUpdate,
 )
 
@@ -65,10 +66,49 @@ class TaskRepository:
             task = self._tasks.get(task_id)
             return task.model_copy() if task is not None else None
 
-    def get_all_tasks(self) -> TaskMap:
-        """Returns a TaskStore dict containing all Tasks."""
+    def get_all_tasks(
+        self,
+        query_params: TaskQueryParams,
+    ) -> TaskMap:
+        """Returns a TaskMap containing all Tasks matching the given filters."""
         with self._lock:
-            return {task_id: task.model_copy() for task_id, task in self._tasks.items()}
+            return {
+                task_id: task.model_copy()
+                for task_id, task in self._tasks.items()
+                if self._matches_filters(
+                    task=task,
+                    query_params=query_params,
+                )
+            }
+
+    def _matches_filters(
+        self,
+        task: Task,
+        query_params: TaskQueryParams,
+    ) -> bool:
+        """Checks if a task matches the given filters.
+        Returns True if the task matches all non-None filters."""
+
+        completed = query_params.completed
+        priority = query_params.priority
+        due_before = query_params.due_before
+        due_after = query_params.due_after
+
+        if completed is not None and task.completed != completed:
+            return False
+        if priority is not None and task.priority != priority:
+            return False
+
+        due_date = task.due_date
+        if due_date is None:
+            return True
+
+        if due_before is not None and due_date >= due_before:
+            return False
+        if due_after is not None and due_date <= due_after:
+            return False
+
+        return True
 
     def update_task(self, task_id: int, task_update: TaskUpdate) -> Task | None:
         """Updates a Task by ID"""
@@ -80,6 +120,12 @@ class TaskRepository:
             now = datetime.now(UTC)
             updates = task_update.model_dump(exclude_unset=True)
             updates["updated_at"] = now
+            due_utc = (
+                updates["due_date"].astimezone(UTC)
+                if updates.get("due_date") is not None
+                else None
+            )
+            updates["due_date"] = due_utc
 
             if updates.get("completed") is True and original_task.completed is False:
                 updates["completed_at"] = now

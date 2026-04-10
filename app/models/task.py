@@ -11,6 +11,21 @@ class Priority(Enum):
     UNSET = "UNSET"
 
 
+class TaskQueryParams(BaseModel):
+    completed: bool | None = Field(
+        None, description="Filter tasks by completion status"
+    )
+    priority: Priority | None = Field(
+        None, description="Filter tasks by priority level"
+    )
+    due_before: AwareDatetime | None = Field(
+        None, description="Filter tasks due before this date"
+    )
+    due_after: AwareDatetime | None = Field(
+        None, description="Filter tasks due after this date"
+    )
+
+
 class Task(BaseModel):
     # Required fields without defaults
     id: int = Field(..., description="The ID of the task")
