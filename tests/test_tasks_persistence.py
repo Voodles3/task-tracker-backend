@@ -1,19 +1,21 @@
 import json
+from pathlib import Path
 
 import pytest
-
 from app.main import create_app
+from httpx import AsyncClient
 from tests.helpers import assert_task_shape, create_test_client
 
 
-def build_restarted_client(persistence_file_path):
+def build_restarted_client(persistence_file_path: Path) -> AsyncClient:
     restarted_app = create_app(data_file_path=persistence_file_path)
     return create_test_client(restarted_app)
 
 
 @pytest.mark.anyio
 async def test_create_task_persists_between_sessions(
-    persistence_client, restartable_file_path
+    persistence_client: AsyncClient,
+    restartable_file_path: Path,
 ) -> None:
     create_response = await persistence_client.post(
         "/api/v1/tasks/",
@@ -35,7 +37,8 @@ async def test_create_task_persists_between_sessions(
 
 @pytest.mark.anyio
 async def test_updated_task_persists_between_sessions(
-    persistence_client, restartable_file_path
+    persistence_client: AsyncClient,
+    restartable_file_path: Path,
 ) -> None:
     await persistence_client.post(
         "/api/v1/tasks/",
@@ -63,7 +66,8 @@ async def test_updated_task_persists_between_sessions(
 
 @pytest.mark.anyio
 async def test_completed_at_persists_between_sessions(
-    persistence_client, restartable_file_path
+    persistence_client: AsyncClient,
+    restartable_file_path: Path,
 ) -> None:
     await persistence_client.post(
         "/api/v1/tasks/",
@@ -96,8 +100,9 @@ async def test_completed_at_persists_between_sessions(
 
 @pytest.mark.anyio
 async def test_deleted_task_stays_deleted_between_sessions(
-    persistence_client, restartable_file_path
-):
+    persistence_client: AsyncClient,
+    restartable_file_path: Path,
+) -> None:
     await persistence_client.post(
         "/api/v1/tasks/",
         json={"title": "Disposable", "description": "Delete me"},
@@ -119,8 +124,9 @@ async def test_deleted_task_stays_deleted_between_sessions(
 
 @pytest.mark.anyio
 async def test_delete_all_tasks_stays_deleted_between_sessions(
-    persistence_client, restartable_file_path
-):
+    persistence_client: AsyncClient,
+    restartable_file_path: Path,
+) -> None:
     await persistence_client.post(
         "/api/v1/tasks/",
         json={"title": "First", "description": "one"},
@@ -154,8 +160,9 @@ async def test_delete_all_tasks_stays_deleted_between_sessions(
 
 @pytest.mark.anyio
 async def test_next_id_continues_after_restart(
-    persistence_client, restartable_file_path
-):
+    persistence_client: AsyncClient,
+    restartable_file_path: Path,
+) -> None:
     await persistence_client.post(
         "/api/v1/tasks/", json={"title": "First", "description": "one"}
     )
@@ -180,8 +187,9 @@ async def test_next_id_continues_after_restart(
 
 @pytest.mark.anyio
 async def test_create_task_writes_expected_json_file(
-    persistence_client, restartable_file_path
-):
+    persistence_client: AsyncClient,
+    restartable_file_path: Path,
+) -> None:
     create_response = await persistence_client.post(
         "/api/v1/tasks/",
         json={"title": "Persisted task", "description": "written to disk"},

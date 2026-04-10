@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 
 import pytest
-
 from app.db.storage import JSONFileTaskStorage
 from app.main import create_app
 from app.models.storage import JSONSaveData, StorageError, TaskMap

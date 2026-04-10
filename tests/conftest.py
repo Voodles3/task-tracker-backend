@@ -1,10 +1,9 @@
+from collections.abc import AsyncGenerator, Generator
 from pathlib import Path
-from typing import AsyncGenerator, Generator
 
 import pytest
-from httpx import AsyncClient
-
 from app.main import create_app
+from httpx import AsyncClient
 from tests.helpers import create_test_client
 
 
@@ -18,6 +17,11 @@ def isolated_file_path(tmp_path: Path) -> Generator[Path, None, None]:
 @pytest.fixture
 def restartable_file_path(tmp_path: Path) -> Path:
     return tmp_path / "tasks.json"
+
+
+@pytest.fixture
+def anyio_backend() -> str:
+    return "asyncio"
 
 
 @pytest.fixture

@@ -105,10 +105,7 @@ class TaskRepository:
 
         if due_before is not None and due_date >= due_before:
             return False
-        if due_after is not None and due_date <= due_after:
-            return False
-
-        return True
+        return due_after is None or due_date > due_after
 
     def update_task(self, task_id: int, task_update: TaskUpdate) -> Task | None:
         """Updates a Task by ID"""
@@ -146,7 +143,7 @@ class TaskRepository:
             return updated_task
 
     def delete_task(self, task_id: int) -> bool:
-        """Deletes a single Task. Returns True if successful and False if task does not exist"""
+        """Deletes one task and returns whether it existed."""
         with self._lock:
             original_task = self._tasks.pop(task_id, None)
             if original_task is None:

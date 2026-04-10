@@ -37,7 +37,10 @@ class Task(BaseModel):
     completed: bool = Field(False, description="The task's completion status")
     priority: Priority = Field(
         Priority.UNSET,
-        description="The priority of the task. Lower number = higher priority. 0 means unset.",
+        description=(
+            "The priority of the task. Lower number = higher priority. "
+            "0 means unset."
+        ),
     )
 
     # Optional fields with defaults

@@ -1,8 +1,7 @@
 from abc import ABC, abstractmethod
 
-from pydantic import BaseModel
-
 from app.models.task import Task
+from pydantic import BaseModel
 
 type TaskMap = dict[int, Task]
 

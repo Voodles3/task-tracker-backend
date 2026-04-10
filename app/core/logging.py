@@ -1,4 +1,5 @@
 import logging
+from logging import LogRecord
 
 
 def setup_logging() -> None:
@@ -12,7 +13,7 @@ def setup_logging() -> None:
         }
         RESET = "\033[0m"
 
-        def format(self, record):
+        def format(self, record: LogRecord) -> str:
             color = self.COLORS.get(record.levelname, self.RESET)
             record.levelname = f"{color}{record.levelname}{self.RESET}"
             record.module = f"{color}{record.module}{self.RESET}"

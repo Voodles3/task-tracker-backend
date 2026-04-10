@@ -4,6 +4,8 @@ import httpx
 from fastapi import FastAPI
 from httpx import AsyncClient
 
+type TaskResponsePayload = dict[str, object]
+
 
 def create_test_client(app: FastAPI) -> AsyncClient:
     transport = httpx.ASGITransport(app=app)
@@ -14,7 +16,7 @@ def create_test_client(app: FastAPI) -> AsyncClient:
 
 
 def assert_task_shape(
-    task: dict,
+    task: TaskResponsePayload,
     *,
     expected_id: int,
     expected_title: str,

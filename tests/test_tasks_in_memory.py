@@ -1,6 +1,5 @@
 import pytest
 from httpx import AsyncClient
-
 from tests.helpers import assert_task_shape
 
 

@@ -1,11 +1,14 @@
-import pytest
+from pathlib import Path
 
+import pytest
 from app.main import create_app
 from tests.helpers import create_test_client
 
 
 @pytest.mark.anyio
-async def test_separate_apps_do_not_share_in_memory_state(tmp_path) -> None:
+async def test_separate_apps_do_not_share_in_memory_state(
+    tmp_path: Path,
+) -> None:
     first_file_path = tmp_path / "first_tasks.json"
     second_file_path = tmp_path / "second_tasks.json"
 

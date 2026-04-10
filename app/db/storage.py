@@ -38,7 +38,7 @@ class JSONFileTaskStorage(StorageAdapter):
                 raw = json.load(f)
                 return JSONSaveData.model_validate(raw)
 
-        except FileNotFoundError:
-            raise FileNotFoundError("Save file not found")
+        except FileNotFoundError as error:
+            raise FileNotFoundError("Save file not found") from error
         except json.JSONDecodeError as e:
             raise StorageError("Error decoding save file JSON") from e
