@@ -33,10 +33,7 @@ class ControlledStorage(StorageAdapter):
 
 def _empty_query_params() -> TaskQueryParams:
     return TaskQueryParams(
-        completed=None,
-        priority=None,
-        due_before=None,
-        due_after=None,
+        completed=None, priority=None, due_before=None, due_after=None, q=None
     )
 
 
