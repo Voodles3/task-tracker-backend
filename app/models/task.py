@@ -24,6 +24,10 @@ class TaskQueryParams(BaseModel):
     due_after: AwareDatetime | None = Field(
         None, description="Filter tasks due after this date"
     )
+    q: str | None = Field(
+        None,
+        description="Filter tasks case-insensitively by title and description",
+    )
 
 
 class Task(BaseModel):
@@ -38,8 +42,7 @@ class Task(BaseModel):
     priority: Priority = Field(
         Priority.UNSET,
         description=(
-            "The priority of the task. Lower number = higher priority. "
-            "0 means unset."
+            "The priority of the task. Lower number = higher priority. 0 means unset."
         ),
     )
 

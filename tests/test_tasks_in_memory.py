@@ -18,7 +18,7 @@ async def _seed_query_param_tasks(client: AsyncClient) -> None:
         "/api/v1/tasks/",
         json={
             "title": "Open low",
-            "description": "open and low priority",
+            "description": "open with low priority",
             "priority": "LOW",
             "due_date": "2026-02-01T00:00:00Z",
         },
@@ -187,6 +187,48 @@ async def test_get_all_tasks_excludes_tasks_without_due_date_when_due_filter_is_
     tasks = response.json()
     assert [task["id"] for task in tasks] == [2]
     assert [task["title"] for task in tasks] == ["Has due date"]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_filters_title_by_query(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+    response = await client.get("/api/v1/tasks/", params={"q": "high laTe"})
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert [task["id"] for task in tasks] == [3]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_not_filtered_with_blank_query(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+    response = await client.get("/api/v1/tasks/", params={"q": "   "})
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert [task["id"] for task in tasks] == [1, 2, 3]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_filters_description_by_query(
+    client: AsyncClient,
+) -> None:
+    await _seed_query_param_tasks(client)
+    response = await client.get("/api/v1/tasks/", params={"q": "And"})
+
+    assert response.status_code == 200
+    tasks = response.json()
+    assert [task["id"] for task in tasks] == [1, 3]
+
+    response2 = await client.get("/api/v1/tasks/", params={"q": "lOW pRi"})
+
+    assert response2.status_code == 200
+    tasks = response2.json()
+    assert [task["id"] for task in tasks] == [2]
 
 
 @pytest.mark.anyio

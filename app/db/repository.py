@@ -93,6 +93,16 @@ class TaskRepository:
         priority = query_params.priority
         due_before = query_params.due_before
         due_after = query_params.due_after
+        query = query_params.q
+
+        if query is not None and query.strip():
+            query = query.strip().casefold()
+            searchable_text = task.title.casefold()
+            if task.description is not None:
+                searchable_text += f"\n{task.description.casefold()}"
+
+            if query not in searchable_text:
+                return False
 
         if completed is not None and task.completed != completed:
             return False
@@ -105,6 +115,7 @@ class TaskRepository:
 
         if due_before is not None and due_date >= due_before:
             return False
+
         return due_after is None or due_date > due_after
 
     def update_task(self, task_id: int, task_update: TaskUpdate) -> Task | None:
