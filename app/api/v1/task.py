@@ -1,7 +1,7 @@
 from logging import getLogger
 
 from app.db.repository import TaskRepository
-from app.models.task import Task, TaskCreate, TaskQueryParams, TaskUpdate
+from app.models.task import Task, TaskCreate, TaskQueryParams, TasksResponse, TaskUpdate
 from fastapi import APIRouter, Depends, HTTPException, status
 
 logger = getLogger(__name__)
@@ -16,10 +16,10 @@ def create_task_router(
     async def check_health() -> dict[str, str]:
         return {"status": "ok"}
 
-    @router.get("/", response_model=list[Task])
-    async def get_all_tasks(query_params: TaskQueryParams = Depends()) -> list[Task]:
-        tasks = session.get_all_tasks(query_params)
-        return list(tasks.values())
+    @router.get("/", response_model=TasksResponse)
+    async def get_all_tasks(query_params: TaskQueryParams = Depends()) -> TasksResponse:
+        tasks, count = session.get_all_tasks(query_params)
+        return TasksResponse(count=count, tasks=list(tasks.values()))
 
     @router.get("/{task_id}", response_model=Task)
     async def get_task(task_id: int) -> Task:

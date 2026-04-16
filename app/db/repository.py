@@ -70,8 +70,9 @@ class TaskRepository:
     def get_all_tasks(
         self,
         query_params: TaskQueryParams | None = None,
-    ) -> TaskMap:
-        """Returns a TaskMap containing all Tasks matching the given filters."""
+    ) -> tuple[TaskMap, int]:
+        """Returns a TaskMap containing all Tasks matching the given filters,
+        and an int for number of tasks."""
         with self._lock:
             tasks = {
                 task_id: task.model_copy()
@@ -83,7 +84,7 @@ class TaskRepository:
                     )
                 )
             }
-            return tasks
+            return tasks, len(tasks)
 
     def _matches_query_params(
         self,

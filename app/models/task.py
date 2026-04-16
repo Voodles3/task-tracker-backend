@@ -74,6 +74,11 @@ class Task(BaseModel):
     )
 
 
+class TasksResponse(BaseModel):
+    count: int
+    tasks: list[Task]
+
+
 class TaskCreate(BaseModel):
     title: str
     description: str | None = None
