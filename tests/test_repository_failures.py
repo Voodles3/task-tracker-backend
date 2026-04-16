@@ -3,7 +3,7 @@ from datetime import UTC, datetime
 import pytest
 from app.db.repository import TaskRepository
 from app.models.storage import JSONSaveData, StorageAdapter, StorageError, TaskMap
-from app.models.task import TaskCreate, TaskQueryParams, TaskUpdate
+from app.models.task import TaskCreate, TaskUpdate
 
 
 class ControlledStorage(StorageAdapter):
@@ -31,12 +31,6 @@ class ControlledStorage(StorageAdapter):
         return self._data.model_copy(deep=True)
 
 
-def _empty_query_params() -> TaskQueryParams:
-    return TaskQueryParams(
-        completed=None, priority=None, due_before=None, due_after=None, q=None
-    )
-
-
 def _build_seeded_repo() -> tuple[TaskRepository, ControlledStorage]:
     storage = ControlledStorage()
     repository = TaskRepository(storage=storage)
@@ -52,7 +46,7 @@ def test_create_task_rolls_back_state_when_save_fails() -> None:
     with pytest.raises(StorageError, match="Error creating new task"):
         repository.create_task(TaskCreate(title="new", description="task"))
 
-    all_tasks = repository.get_all_tasks(_empty_query_params())
+    all_tasks = repository.get_all_tasks()
     assert len(all_tasks) == 0
 
     # Ensure next_id rollback happened: first successful create should still be ID 1.
@@ -81,7 +75,7 @@ def test_delete_task_rolls_back_state_when_save_fails() -> None:
     with pytest.raises(StorageError, match="Failed to save task deletion"):
         repository.delete_task(1)
 
-    remaining = repository.get_all_tasks(_empty_query_params())
+    remaining = repository.get_all_tasks()
     assert sorted(remaining.keys()) == [1, 2]
 
 
@@ -92,7 +86,7 @@ def test_delete_all_tasks_rolls_back_state_when_save_fails() -> None:
     with pytest.raises(StorageError, match="Failed to save all tasks deletion"):
         repository.delete_all_tasks()
 
-    remaining = repository.get_all_tasks(_empty_query_params())
+    remaining = repository.get_all_tasks()
     assert sorted(remaining.keys()) == [1, 2]
 
 

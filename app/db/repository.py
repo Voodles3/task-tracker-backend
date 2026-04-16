@@ -14,6 +14,7 @@ from app.models.task import (
     TaskQueryParams,
     TaskUpdate,
 )
+from pydantic import AwareDatetime
 
 logger = getLogger(__name__)
 
@@ -68,26 +69,32 @@ class TaskRepository:
 
     def get_all_tasks(
         self,
-        query_params: TaskQueryParams,
+        query_params: TaskQueryParams | None = None,
     ) -> TaskMap:
         """Returns a TaskMap containing all Tasks matching the given filters."""
         with self._lock:
-            return {
+            tasks = {
                 task_id: task.model_copy()
                 for task_id, task in self._tasks.items()
-                if self._matches_filters(
-                    task=task,
-                    query_params=query_params,
+                if (
+                    self._matches_query_params(
+                        task=task,
+                        query_params=query_params,
+                    )
                 )
             }
+            return tasks
 
-    def _matches_filters(
+    def _matches_query_params(
         self,
         task: Task,
-        query_params: TaskQueryParams,
+        query_params: TaskQueryParams | None,
     ) -> bool:
         """Checks if a task matches the given filters.
         Returns True if the task matches all non-None filters."""
+
+        if query_params is None:
+            return True
 
         completed = query_params.completed
         priority = query_params.priority
@@ -95,20 +102,33 @@ class TaskRepository:
         due_after = query_params.due_after
         query = query_params.q
 
-        if query is not None and query.strip():
-            query = query.strip().casefold()
-            searchable_text = task.title.casefold()
-            if task.description is not None:
-                searchable_text += f"\n{task.description.casefold()}"
-
-            if query not in searchable_text:
-                return False
-
         if completed is not None and task.completed != completed:
             return False
         if priority is not None and task.priority != priority:
             return False
 
+        if not self._matches_query(task, query):
+            return False
+
+        return self._matches_due_dates(task, due_before, due_after)
+
+    def _matches_query(self, task: Task, query: str | None) -> bool:
+        if query is None or not query.strip():
+            return True
+
+        query = query.strip().casefold()
+        searchable_text = task.title.casefold()
+        if task.description is not None:
+            searchable_text += f"\n{task.description.casefold()}"
+
+        return query in searchable_text
+
+    def _matches_due_dates(
+        self,
+        task: Task,
+        due_before: AwareDatetime | None,
+        due_after: AwareDatetime | None,
+    ) -> bool:
         due_date = task.due_date
         if due_date is None:
             return due_before is None and due_after is None
