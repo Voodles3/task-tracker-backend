@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, Field
 
@@ -9,6 +10,17 @@ class Priority(Enum):
     MEDIUM = "MEDIUM"
     LOW = "LOW"
     UNSET = "UNSET"
+
+
+class SortBy(Enum):
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+    DUE_DATE = "due_date"
+    PRIORITY = "priority"
+    TITLE = "title"
+
+
+type Order = Literal["asc", "desc"]
 
 
 class TaskQueryParams(BaseModel):
@@ -24,9 +36,17 @@ class TaskQueryParams(BaseModel):
     due_after: AwareDatetime | None = Field(
         None, description="Filter tasks due after this date"
     )
+
     q: str | None = Field(
         None,
         description="Filter tasks case-insensitively by title and description",
+    )
+
+    sort_by: SortBy = Field(
+        SortBy.CREATED_AT, description="Sort tasks by a specified field"
+    )
+    order: Order = Field(
+        "asc", description="Order sorted tasks ascending or descending"
     )
 
 
