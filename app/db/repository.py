@@ -1,5 +1,7 @@
+from collections.abc import Callable
 from datetime import UTC, datetime
 from logging import getLogger
+from operator import attrgetter
 from threading import Lock
 
 from app.models.storage import (
@@ -9,10 +11,12 @@ from app.models.storage import (
     TaskMap,
 )
 from app.models.task import (
+    Order,
     Task,
     TaskCreate,
     TaskQueryParams,
     TaskUpdate,
+    default_sort_order,
 )
 from pydantic import AwareDatetime
 
@@ -72,30 +76,53 @@ class TaskRepository:
         query_params: TaskQueryParams | None = None,
     ) -> tuple[TaskMap, int]:
         """Returns a TaskMap containing all Tasks matching the given filters,
-        and an int for number of tasks."""
+        and an int for the fetched task count."""
         with self._lock:
-            tasks = {
-                task_id: task.model_copy()
-                for task_id, task in self._tasks.items()
+            if query_params is None:
+                task_map = {
+                    task_id: task.model_copy() for task_id, task in self._tasks.items()
+                }
+                return task_map, len(task_map)
+
+            tasks = [
+                task.model_copy()
+                for task in self._tasks.values()
                 if (
                     self._matches_query_params(
                         task=task,
                         query_params=query_params,
                     )
                 )
-            }
-            return tasks, len(tasks)
+            ]
+
+            sort_key = self._get_sort_key(query_params)
+
+            order = query_params.order or default_sort_order[query_params.sort_by]
+            order_reverse = order.value == Order.DESC.value
+
+            tasks.sort(key=sort_key, reverse=order_reverse)
+
+            task_map = {task.id: task for task in tasks}
+
+            return task_map, len(task_map)
+
+    def _get_sort_key(
+        self, query_params: TaskQueryParams
+    ) -> Callable[[Task], AwareDatetime | int]:
+        if query_params.sort_by.value == "due_date":
+            return lambda task: task.due_date or datetime.max.replace(tzinfo=UTC)
+        elif query_params.sort_by.value == "priority":
+            return lambda task: task.priority.sort_order
+        else:
+            return attrgetter(query_params.sort_by.value)
 
     def _matches_query_params(
         self,
         task: Task,
-        query_params: TaskQueryParams | None,
+        query_params: TaskQueryParams,
     ) -> bool:
         """Checks if a task matches the given filters.
         Returns True if the task matches all non-None filters."""
-
-        if query_params is None:
-            return True
 
         completed = query_params.completed
         priority = query_params.priority

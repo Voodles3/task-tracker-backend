@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Literal
 
 from pydantic import AwareDatetime, BaseModel, Field
 
@@ -11,6 +10,16 @@ class Priority(Enum):
     LOW = "LOW"
     UNSET = "UNSET"
 
+    @property
+    def sort_order(self) -> int:
+        return {
+            Priority.URGENT: 0,
+            Priority.HIGH: 1,
+            Priority.MEDIUM: 2,
+            Priority.LOW: 3,
+            Priority.UNSET: 4,
+        }[self]
+
 
 class SortBy(Enum):
     CREATED_AT = "created_at"
@@ -20,7 +29,18 @@ class SortBy(Enum):
     TITLE = "title"
 
 
-type Order = Literal["asc", "desc"]
+class Order(Enum):
+    ASC = "asc"
+    DESC = "desc"
+
+
+default_sort_order = {
+    SortBy.CREATED_AT: Order.DESC,
+    SortBy.UPDATED_AT: Order.DESC,
+    SortBy.DUE_DATE: Order.ASC,
+    SortBy.PRIORITY: Order.ASC,
+    SortBy.TITLE: Order.ASC,
+}
 
 
 class TaskQueryParams(BaseModel):
@@ -45,8 +65,10 @@ class TaskQueryParams(BaseModel):
     sort_by: SortBy = Field(
         SortBy.CREATED_AT, description="Sort tasks by a specified field"
     )
-    order: Order = Field(
-        "asc", description="Order sorted tasks ascending or descending"
+    order: Order | None = Field(
+        None,
+        description="""Order sorted tasks ascending or descending by the SortBy value. 
+        If None, uses default sort order""",
     )
 
 
