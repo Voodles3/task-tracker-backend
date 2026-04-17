@@ -12,6 +12,7 @@ from app.models.storage import (
 )
 from app.models.task import (
     Order,
+    SortBy,
     Task,
     TaskCreate,
     TaskQueryParams,
@@ -74,15 +75,11 @@ class TaskRepository:
     def get_all_tasks(
         self,
         query_params: TaskQueryParams | None = None,
-    ) -> tuple[TaskMap, int]:
+    ) -> list[Task]:
         """Returns a TaskMap containing all Tasks matching the given filters,
         and an int for the fetched task count."""
         with self._lock:
-            if query_params is None:
-                task_map = {
-                    task_id: task.model_copy() for task_id, task in self._tasks.items()
-                }
-                return task_map, len(task_map)
+            query_params = query_params or TaskQueryParams()
 
             tasks = [
                 task.model_copy()
@@ -102,16 +99,14 @@ class TaskRepository:
 
             tasks.sort(key=sort_key, reverse=order_reverse)
 
-            task_map = {task.id: task for task in tasks}
-
-            return task_map, len(task_map)
+            return tasks
 
     def _get_sort_key(
         self, query_params: TaskQueryParams
-    ) -> Callable[[Task], AwareDatetime | int]:
-        if query_params.sort_by.value == "due_date":
+    ) -> Callable[[Task], AwareDatetime | int | str]:
+        if query_params.sort_by is SortBy.DUE_DATE:
             return lambda task: task.due_date or datetime.max.replace(tzinfo=UTC)
-        elif query_params.sort_by.value == "priority":
+        elif query_params.sort_by is SortBy.PRIORITY:
             return lambda task: task.priority.sort_order
         else:
             return attrgetter(query_params.sort_by.value)

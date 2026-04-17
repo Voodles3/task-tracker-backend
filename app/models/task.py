@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Annotated
 
 from pydantic import AwareDatetime, BaseModel, Field
 
@@ -44,32 +45,37 @@ default_sort_order = {
 
 
 class TaskQueryParams(BaseModel):
-    completed: bool | None = Field(
-        None, description="Filter tasks by completion status"
-    )
-    priority: Priority | None = Field(
-        None, description="Filter tasks by priority level"
-    )
-    due_before: AwareDatetime | None = Field(
-        None, description="Filter tasks due before this date"
-    )
-    due_after: AwareDatetime | None = Field(
-        None, description="Filter tasks due after this date"
-    )
+    completed: Annotated[
+        bool | None, Field(description="Filter tasks by completion status")
+    ] = None
+    priority: Annotated[
+        Priority | None, Field(description="Filter tasks by priority level")
+    ] = None
+    due_before: Annotated[
+        AwareDatetime | None, Field(description="Filter tasks due before this date")
+    ] = None
+    due_after: Annotated[
+        AwareDatetime | None, Field(description="Filter tasks due after this date")
+    ] = None
 
-    q: str | None = Field(
-        None,
-        description="Filter tasks case-insensitively by title and description",
-    )
+    q: Annotated[
+        str | None,
+        Field(
+            description="Filter tasks case-insensitively by title and description",
+        ),
+    ] = None
 
-    sort_by: SortBy = Field(
-        SortBy.CREATED_AT, description="Sort tasks by a specified field"
+    sort_by: Annotated[SortBy, Field(description="Sort tasks by a specified field")] = (
+        SortBy.CREATED_AT
     )
-    order: Order | None = Field(
-        None,
-        description="""Order sorted tasks ascending or descending by the SortBy value.
-        If None, uses default sort order""",
-    )
+    order: Annotated[
+        Order | None,
+        Field(
+            description="""
+            Order sorted tasks ascending or descending by the SortBy value.
+            If None, uses default sort order""",
+        ),
+    ] = None
 
 
 class Task(BaseModel):
