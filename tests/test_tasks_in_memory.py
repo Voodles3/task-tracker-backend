@@ -34,6 +34,35 @@ async def _seed_query_param_tasks(client: AsyncClient) -> None:
     )
 
 
+async def _seed_sort_query_param_tasks(client: AsyncClient) -> None:
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Beta task",
+            "description": "low priority with later due date",
+            "priority": "LOW",
+            "due_date": "2026-03-01T00:00:00Z",
+        },
+    )
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Alpha task",
+            "description": "urgent priority with no due date",
+            "priority": "URGENT",
+        },
+    )
+    await client.post(
+        "/api/v1/tasks/",
+        json={
+            "title": "Charlie task",
+            "description": "high priority with earlier due date",
+            "priority": "HIGH",
+            "due_date": "2026-01-01T00:00:00Z",
+        },
+    )
+
+
 @pytest.mark.anyio
 async def test_get_all_tasks_starts_empty(client: AsyncClient) -> None:
     response = await client.get("/api/v1/tasks/")
@@ -263,6 +292,118 @@ async def test_get_all_tasks_applies_multiple_query_params_together(
     assert tasks[0]["title"] == "Open high later"
     assert tasks[0]["completed"] is False
     assert tasks[0]["priority"] == "HIGH"
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_sorts_by_created_at_desc_by_default_and_accepts_asc_order(
+    client: AsyncClient,
+) -> None:
+    await _seed_sort_query_param_tasks(client)
+
+    default_response = await client.get("/api/v1/tasks/")
+    asc_response = await client.get("/api/v1/tasks/", params={"order": "asc"})
+
+    assert default_response.status_code == 200
+    default_tasks = get_tasks_from_response(default_response.json())
+    assert [task["id"] for task in default_tasks] == [3, 2, 1]
+
+    assert asc_response.status_code == 200
+    asc_tasks = get_tasks_from_response(asc_response.json())
+    assert [task["id"] for task in asc_tasks] == [1, 2, 3]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_sorts_by_priority_using_priority_rank(
+    client: AsyncClient,
+) -> None:
+    await _seed_sort_query_param_tasks(client)
+
+    response = await client.get("/api/v1/tasks/", params={"sort_by": "priority"})
+
+    assert response.status_code == 200
+    tasks = get_tasks_from_response(response.json())
+    assert [task["priority"] for task in tasks] == ["URGENT", "HIGH", "LOW"]
+    assert [task["id"] for task in tasks] == [2, 3, 1]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_sorts_by_due_date_with_missing_due_dates_last(
+    client: AsyncClient,
+) -> None:
+    await _seed_sort_query_param_tasks(client)
+
+    response = await client.get("/api/v1/tasks/", params={"sort_by": "due_date"})
+
+    assert response.status_code == 200
+    tasks = get_tasks_from_response(response.json())
+    assert [task["id"] for task in tasks] == [3, 1, 2]
+    assert [task["due_date"] for task in tasks] == [
+        "2026-01-01T00:00:00Z",
+        "2026-03-01T00:00:00Z",
+        None,
+    ]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_sorts_by_title_and_accepts_desc_order(
+    client: AsyncClient,
+) -> None:
+    await _seed_sort_query_param_tasks(client)
+
+    asc_response = await client.get("/api/v1/tasks/", params={"sort_by": "title"})
+    desc_response = await client.get(
+        "/api/v1/tasks/",
+        params={"sort_by": "title", "order": "desc"},
+    )
+
+    assert asc_response.status_code == 200
+    asc_tasks = get_tasks_from_response(asc_response.json())
+    assert [task["title"] for task in asc_tasks] == [
+        "Alpha task",
+        "Beta task",
+        "Charlie task",
+    ]
+
+    assert desc_response.status_code == 200
+    desc_tasks = get_tasks_from_response(desc_response.json())
+    assert [task["title"] for task in desc_tasks] == [
+        "Charlie task",
+        "Beta task",
+        "Alpha task",
+    ]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_sorts_by_updated_at_desc_by_default(
+    client: AsyncClient,
+) -> None:
+    await _seed_sort_query_param_tasks(client)
+    await client.patch("/api/v1/tasks/1", json={"description": "recently updated"})
+
+    response = await client.get("/api/v1/tasks/", params={"sort_by": "updated_at"})
+
+    assert response.status_code == 200
+    tasks = get_tasks_from_response(response.json())
+    assert tasks[0]["id"] == 1
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_rejects_invalid_sort_query_params(
+    client: AsyncClient,
+) -> None:
+    invalid_sort_response = await client.get(
+        "/api/v1/tasks/",
+        params={"sort_by": "id"},
+    )
+    invalid_order_response = await client.get(
+        "/api/v1/tasks/",
+        params={"order": "newest"},
+    )
+
+    assert invalid_sort_response.status_code == 422
+    assert invalid_sort_response.json()["detail"]
+    assert invalid_order_response.status_code == 422
+    assert invalid_order_response.json()["detail"]
 
 
 @pytest.mark.anyio
