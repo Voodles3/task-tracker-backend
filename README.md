@@ -2,7 +2,8 @@
 
 This is a small FastAPI backend for a task tracker app.
 
-It exposes a simple JSON API for creating, reading, updating, and deleting tasks, then persists that data to a local JSON file.
+It exposes a simple JSON API for creating, reading, updating, and deleting tasks,
+then persists that data to a local JSON file.
 
 Current structure is split into:
 
@@ -70,7 +71,7 @@ Each task looks like this:
 {
   "id": 1,
   "title": "Write README",
-  "description": "Trim the docs down",
+  "description": "Explain full app behavior",
   "priority": "UNSET",
   "completed": false,
   "due_date": null,
@@ -80,11 +81,35 @@ Each task looks like this:
 }
 ```
 
+`GET /api/v1/tasks/` returns a paginated list:
+
+```json
+{
+  "total": 0,
+  "count": 0,
+  "limit": 50,
+  "offset": 0,
+  "tasks": []
+}
+```
+
+List query params:
+
+- `completed`: filter by completion status
+- `priority`: `URGENT`, `HIGH`, `MEDIUM`, `LOW`, or `UNSET`
+- `due_before` / `due_after`: filter by due date
+- `q`: case-insensitive title and description search
+- `sort_by`: `created_at`, `updated_at`, `due_date`, `priority`, or `title`
+- `order`: `asc` or `desc`
+- `limit`: page size, from `1` to `100`, default `50`
+- `offset`: starting index, default `0`
+
 Notes:
 
 - `description` is optional
 - `priority` defaults to `UNSET`
 - `completed` defaults to `false`
+- `GET /tasks` defaults to newest-created tasks first
 - missing tasks return `404`
 - storage failures return `500`
 
@@ -102,6 +127,12 @@ List tasks:
 
 ```bash
 curl http://127.0.0.1:8000/api/v1/tasks/
+```
+
+Filter, sort, and paginate tasks:
+
+```bash
+curl 'http://127.0.0.1:8000/api/v1/tasks/?completed=false&sort_by=priority&limit=10&offset=0'
 ```
 
 Update a task:
@@ -130,4 +161,5 @@ curl -X DELETE http://127.0.0.1:8000/api/v1/tasks/
 poetry run pytest -q
 ```
 
-The test suite covers the main CRUD flows, error handling, and JSON persistence behavior.
+The test suite covers CRUD flows, list filtering/search/sorting/pagination,
+error handling, and JSON persistence behavior.
