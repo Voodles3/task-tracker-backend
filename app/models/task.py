@@ -77,6 +77,13 @@ class TaskQueryParams(BaseModel):
         ),
     ] = None
 
+    limit: Annotated[
+        int, Field(ge=1, le=100, description="Fetch up to this many tasks")
+    ] = 50
+    offset: Annotated[
+        int, Field(ge=0, description="The index from which to start displaying results")
+    ] = 0
+
 
 class Task(BaseModel):
     # Required fields without defaults
@@ -102,9 +109,16 @@ class Task(BaseModel):
     )
 
 
-class TasksResponse(BaseModel):
+class GetTasksResult(BaseModel):
+    total: int
     count: int
+    limit: int
+    offset: int
     tasks: list[Task]
+
+
+class TasksResponse(GetTasksResult):
+    pass
 
 
 class TaskCreate(BaseModel):

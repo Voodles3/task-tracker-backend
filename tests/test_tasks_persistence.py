@@ -119,7 +119,13 @@ async def test_deleted_task_stays_deleted_between_sessions(
     assert get_response.status_code == 404
     assert get_response.json() == {"detail": "Task with id 1 not found"}
     assert list_response.status_code == 200
-    assert list_response.json() == {"count": 0, "tasks": []}
+    assert list_response.json() == {
+        "total": 0,
+        "count": 0,
+        "limit": 50,
+        "offset": 0,
+        "tasks": [],
+    }
 
 
 @pytest.mark.anyio
@@ -148,7 +154,13 @@ async def test_delete_all_tasks_stays_deleted_between_sessions(
         )
 
     assert list_response.status_code == 200
-    assert list_response.json() == {"count": 0, "tasks": []}
+    assert list_response.json() == {
+        "total": 0,
+        "count": 0,
+        "limit": 50,
+        "offset": 0,
+        "tasks": [],
+    }
     assert create_response.status_code == 201
     assert_task_shape(
         create_response.json(),

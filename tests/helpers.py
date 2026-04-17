@@ -47,6 +47,16 @@ def assert_task_shape(
 
 def get_tasks_from_response(payload: TasksResponsePayload) -> list[TaskResponsePayload]:
     tasks = payload["tasks"]
+    count = payload["count"]
+    total = payload["total"]
+    limit = payload["limit"]
+    offset = payload["offset"]
+
     assert isinstance(tasks, list)
-    assert payload["count"] == len(tasks)
+    assert isinstance(count, int)
+    assert isinstance(total, int)
+    assert isinstance(limit, int)
+    assert isinstance(offset, int)
+    assert count == len(tasks)
+    assert total >= count
     return cast(list[TaskResponsePayload], tasks)

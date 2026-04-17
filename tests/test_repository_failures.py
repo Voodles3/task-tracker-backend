@@ -46,9 +46,10 @@ def test_create_task_rolls_back_state_when_save_fails() -> None:
     with pytest.raises(StorageError, match="Error creating new task"):
         repository.create_task(TaskCreate(title="new", description="task"))
 
-    all_tasks = repository.get_all_tasks()
-    assert all_tasks == []
-    assert len(all_tasks) == 0
+    result = repository.get_all_tasks()
+    assert result.tasks == []
+    assert result.count == 0
+    assert result.total == 0
 
     # Ensure next_id rollback happened: first successful create should still be ID 1.
     storage.set_fail_on_save(False)
@@ -76,9 +77,10 @@ def test_delete_task_rolls_back_state_when_save_fails() -> None:
     with pytest.raises(StorageError, match="Failed to save task deletion"):
         repository.delete_task(1)
 
-    remaining = repository.get_all_tasks()
-    assert sorted([task.id for task in remaining]) == [1, 2]
-    assert len(remaining) == 2
+    result = repository.get_all_tasks()
+    assert sorted([task.id for task in result.tasks]) == [1, 2]
+    assert result.count == 2
+    assert result.total == 2
 
 
 def test_delete_all_tasks_rolls_back_state_when_save_fails() -> None:
@@ -88,9 +90,10 @@ def test_delete_all_tasks_rolls_back_state_when_save_fails() -> None:
     with pytest.raises(StorageError, match="Failed to save all tasks deletion"):
         repository.delete_all_tasks()
 
-    remaining = repository.get_all_tasks()
-    assert sorted([task.id for task in remaining]) == [1, 2]
-    assert len(remaining) == 2
+    result = repository.get_all_tasks()
+    assert sorted([task.id for task in result.tasks]) == [1, 2]
+    assert result.count == 2
+    assert result.total == 2
 
 
 def test_update_task_allows_explicit_due_date_clearing() -> None:

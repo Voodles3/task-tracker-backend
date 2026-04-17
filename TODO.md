@@ -12,8 +12,8 @@
 - Step 2: Make `GET /tasks` frontend-ready
 - ✅ Add optional filters for `completed`, `priority`, `due_before`, and `due_after`
 - ✅ Add `q` search across title and description
-- Add sorting with `sort_by` and `order`
-- Add pagination with `limit` and `offset`
+- ✅ Add sorting with `sort_by` and `order`
+- ✅ Add pagination with `limit` and `offset`
 - Keep endpoint thin and move list/query logic into the store/service layer
 - Keep the response as `list[Task]` unless pagination metadata is actually needed
 - Add tests for filtering, search, sorting, and pagination

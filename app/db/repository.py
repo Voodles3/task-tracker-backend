@@ -11,6 +11,7 @@ from app.models.storage import (
     TaskMap,
 )
 from app.models.task import (
+    GetTasksResult,
     Order,
     SortBy,
     Task,
@@ -75,12 +76,13 @@ class TaskRepository:
     def get_all_tasks(
         self,
         query_params: TaskQueryParams | None = None,
-    ) -> list[Task]:
-        """Returns a TaskMap containing all Tasks matching the given filters,
-        and an int for the fetched task count."""
+    ) -> GetTasksResult:
+        """Returns filtered, sorted, and paginated tasks with result metadata."""
         with self._lock:
-            query_params = query_params or TaskQueryParams()
+            if query_params is None:
+                query_params = TaskQueryParams()
 
+            # Get all tasks matching basic query params
             tasks = [
                 task.model_copy()
                 for task in self._tasks.values()
@@ -92,6 +94,7 @@ class TaskRepository:
                 )
             ]
 
+            # Sort tasks by sort key in specified order
             sort_key = self._get_sort_key(query_params)
 
             order = query_params.order or default_sort_order[query_params.sort_by]
@@ -99,7 +102,19 @@ class TaskRepository:
 
             tasks.sort(key=sort_key, reverse=order_reverse)
 
-            return tasks
+            total = len(tasks)
+
+            # Apply limit and offset to get desired subset
+            limit = query_params.limit
+            offset = query_params.offset
+            end = limit + offset
+            tasks = tasks[offset:end]
+
+            count = len(tasks)
+
+            return GetTasksResult(
+                total=total, count=count, limit=limit, offset=offset, tasks=tasks
+            )
 
     def _get_sort_key(
         self, query_params: TaskQueryParams

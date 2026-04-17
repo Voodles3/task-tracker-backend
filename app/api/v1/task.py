@@ -18,8 +18,14 @@ def create_task_router(
 
     @router.get("/", response_model=TasksResponse)
     async def get_all_tasks(query_params: TaskQueryParams = Depends()) -> TasksResponse:
-        tasks = session.get_all_tasks(query_params)
-        return TasksResponse(count=len(tasks), tasks=tasks)
+        res = session.get_all_tasks(query_params)
+        return TasksResponse(
+            total=res.total,
+            count=res.count,
+            limit=res.limit,
+            offset=res.offset,
+            tasks=res.tasks,
+        )
 
     @router.get("/{task_id}", response_model=Task)
     async def get_task(task_id: int) -> Task:

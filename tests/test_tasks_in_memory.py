@@ -68,7 +68,13 @@ async def test_get_all_tasks_starts_empty(client: AsyncClient) -> None:
     response = await client.get("/api/v1/tasks/")
 
     assert response.status_code == 200
-    assert response.json() == {"count": 0, "tasks": []}
+    assert response.json() == {
+        "total": 0,
+        "count": 0,
+        "limit": 50,
+        "offset": 0,
+        "tasks": [],
+    }
 
 
 @pytest.mark.anyio
@@ -388,6 +394,70 @@ async def test_get_all_tasks_sorts_by_updated_at_desc_by_default(
 
 
 @pytest.mark.anyio
+async def test_get_all_tasks_paginates_after_sorting(
+    client: AsyncClient,
+) -> None:
+    await _seed_sort_query_param_tasks(client)
+
+    response = await client.get(
+        "/api/v1/tasks/",
+        params={"limit": "2", "offset": "1"},
+    )
+
+    assert response.status_code == 200
+    payload = response.json()
+    tasks = get_tasks_from_response(payload)
+    assert payload["total"] == 3
+    assert payload["count"] == 2
+    assert payload["limit"] == 2
+    assert payload["offset"] == 1
+    assert [task["id"] for task in tasks] == [2, 1]
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_returns_empty_page_when_offset_exceeds_total(
+    client: AsyncClient,
+) -> None:
+    await _seed_sort_query_param_tasks(client)
+
+    response = await client.get("/api/v1/tasks/", params={"offset": "10"})
+
+    assert response.status_code == 200
+    payload = response.json()
+    tasks = get_tasks_from_response(payload)
+    assert payload["total"] == 3
+    assert payload["count"] == 0
+    assert payload["limit"] == 50
+    assert payload["offset"] == 10
+    assert tasks == []
+
+
+@pytest.mark.anyio
+async def test_get_all_tasks_rejects_invalid_pagination_query_params(
+    client: AsyncClient,
+) -> None:
+    invalid_limit_response = await client.get(
+        "/api/v1/tasks/",
+        params={"limit": "0"},
+    )
+    too_large_limit_response = await client.get(
+        "/api/v1/tasks/",
+        params={"limit": "101"},
+    )
+    invalid_offset_response = await client.get(
+        "/api/v1/tasks/",
+        params={"offset": "-1"},
+    )
+
+    assert invalid_limit_response.status_code == 422
+    assert invalid_limit_response.json()["detail"]
+    assert too_large_limit_response.status_code == 422
+    assert too_large_limit_response.json()["detail"]
+    assert invalid_offset_response.status_code == 422
+    assert invalid_offset_response.json()["detail"]
+
+
+@pytest.mark.anyio
 async def test_get_all_tasks_rejects_invalid_sort_query_params(
     client: AsyncClient,
 ) -> None:
@@ -527,7 +597,13 @@ async def test_delete_all_tasks_in_memory(client: AsyncClient) -> None:
     list_response = await client.get("/api/v1/tasks/")
 
     assert list_response.status_code == 200
-    assert list_response.json() == {"count": 0, "tasks": []}
+    assert list_response.json() == {
+        "total": 0,
+        "count": 0,
+        "limit": 50,
+        "offset": 0,
+        "tasks": [],
+    }
 
 
 @pytest.mark.anyio
