@@ -1,6 +1,6 @@
 import pytest
 from httpx import AsyncClient
-from tests.helpers import assert_task_shape
+from tests.helpers import assert_task_shape, get_tasks_from_response
 
 
 async def _seed_query_param_tasks(client: AsyncClient) -> None:
@@ -39,7 +39,7 @@ async def test_get_all_tasks_starts_empty(client: AsyncClient) -> None:
     response = await client.get("/api/v1/tasks/")
 
     assert response.status_code == 200
-    assert response.json() == []
+    assert response.json() == {"count": 0, "tasks": []}
 
 
 @pytest.mark.anyio
@@ -76,19 +76,19 @@ async def test_get_all_tasks_returns_created_tasks(client: AsyncClient) -> None:
     response = await client.get("/api/v1/tasks/")
 
     assert response.status_code == 200
-    tasks = response.json()
+    tasks = get_tasks_from_response(response.json())
     assert len(tasks) == 2
     assert_task_shape(
         tasks[0],
-        expected_id=1,
-        expected_title="First task",
-        expected_description="one",
-    )
-    assert_task_shape(
-        tasks[1],
         expected_id=2,
         expected_title="Second task",
         expected_description="two",
+    )
+    assert_task_shape(
+        tasks[1],
+        expected_id=1,
+        expected_title="First task",
+        expected_description="one",
     )
 
 
@@ -101,7 +101,7 @@ async def test_get_all_tasks_filters_by_completed_query_param(
     response = await client.get("/api/v1/tasks/", params={"completed": "true"})
 
     assert response.status_code == 200
-    tasks = response.json()
+    tasks = get_tasks_from_response(response.json())
     assert len(tasks) == 1
     assert tasks[0]["id"] == 1
     assert tasks[0]["title"] == "Completed high"
@@ -117,8 +117,8 @@ async def test_get_all_tasks_filters_by_priority_query_param(
     response = await client.get("/api/v1/tasks/", params={"priority": "HIGH"})
 
     assert response.status_code == 200
-    tasks = response.json()
-    assert [task["id"] for task in tasks] == [1, 3]
+    tasks = get_tasks_from_response(response.json())
+    assert [task["id"] for task in tasks] == [3, 1]
     assert [task["priority"] for task in tasks] == ["HIGH", "HIGH"]
 
 
@@ -134,9 +134,9 @@ async def test_get_all_tasks_filters_by_due_before_query_param(
     )
 
     assert response.status_code == 200
-    tasks = response.json()
-    assert [task["id"] for task in tasks] == [1, 2]
-    assert [task["title"] for task in tasks] == ["Completed high", "Open low"]
+    tasks = get_tasks_from_response(response.json())
+    assert [task["id"] for task in tasks] == [2, 1]
+    assert [task["title"] for task in tasks] == ["Open low", "Completed high"]
 
 
 @pytest.mark.anyio
@@ -151,7 +151,7 @@ async def test_get_all_tasks_filters_by_due_after_query_param(
     )
 
     assert response.status_code == 200
-    tasks = response.json()
+    tasks = get_tasks_from_response(response.json())
     assert [task["id"] for task in tasks] == [3]
     assert [task["title"] for task in tasks] == ["Open high later"]
 
@@ -184,7 +184,7 @@ async def test_get_all_tasks_excludes_tasks_without_due_date_when_due_filter_is_
     )
 
     assert response.status_code == 200
-    tasks = response.json()
+    tasks = get_tasks_from_response(response.json())
     assert [task["id"] for task in tasks] == [2]
     assert [task["title"] for task in tasks] == ["Has due date"]
 
@@ -197,7 +197,7 @@ async def test_get_all_tasks_filters_title_by_query(
     response = await client.get("/api/v1/tasks/", params={"q": "high laTe"})
 
     assert response.status_code == 200
-    tasks = response.json()
+    tasks = get_tasks_from_response(response.json())
     assert [task["id"] for task in tasks] == [3]
 
 
@@ -209,8 +209,8 @@ async def test_get_all_tasks_not_filtered_with_blank_query(
     response = await client.get("/api/v1/tasks/", params={"q": "   "})
 
     assert response.status_code == 200
-    tasks = response.json()
-    assert [task["id"] for task in tasks] == [1, 2, 3]
+    tasks = get_tasks_from_response(response.json())
+    assert [task["id"] for task in tasks] == [3, 2, 1]
 
 
 @pytest.mark.anyio
@@ -221,13 +221,13 @@ async def test_get_all_tasks_filters_description_by_query(
     response = await client.get("/api/v1/tasks/", params={"q": "And"})
 
     assert response.status_code == 200
-    tasks = response.json()
-    assert [task["id"] for task in tasks] == [1, 3]
+    tasks = get_tasks_from_response(response.json())
+    assert [task["id"] for task in tasks] == [3, 1]
 
     response2 = await client.get("/api/v1/tasks/", params={"q": "lOW pRi"})
 
     assert response2.status_code == 200
-    tasks = response2.json()
+    tasks = get_tasks_from_response(response2.json())
     assert [task["id"] for task in tasks] == [2]
 
 
@@ -257,7 +257,7 @@ async def test_get_all_tasks_applies_multiple_query_params_together(
     )
 
     assert response.status_code == 200
-    tasks = response.json()
+    tasks = get_tasks_from_response(response.json())
     assert len(tasks) == 1
     assert tasks[0]["id"] == 3
     assert tasks[0]["title"] == "Open high later"
@@ -386,7 +386,7 @@ async def test_delete_all_tasks_in_memory(client: AsyncClient) -> None:
     list_response = await client.get("/api/v1/tasks/")
 
     assert list_response.status_code == 200
-    assert list_response.json() == []
+    assert list_response.json() == {"count": 0, "tasks": []}
 
 
 @pytest.mark.anyio

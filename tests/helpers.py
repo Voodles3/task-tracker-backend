@@ -1,10 +1,12 @@
 from datetime import datetime
+from typing import cast
 
 import httpx
 from fastapi import FastAPI
 from httpx import AsyncClient
 
 type TaskResponsePayload = dict[str, object]
+type TasksResponsePayload = dict[str, object]
 
 
 def create_test_client(app: FastAPI) -> AsyncClient:
@@ -41,3 +43,10 @@ def assert_task_shape(
     assert isinstance(updated_at, str)
     assert datetime.fromisoformat(created_at).tzinfo is not None
     assert datetime.fromisoformat(updated_at).tzinfo is not None
+
+
+def get_tasks_from_response(payload: TasksResponsePayload) -> list[TaskResponsePayload]:
+    tasks = payload["tasks"]
+    assert isinstance(tasks, list)
+    assert payload["count"] == len(tasks)
+    return cast(list[TaskResponsePayload], tasks)

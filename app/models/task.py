@@ -67,7 +67,7 @@ class TaskQueryParams(BaseModel):
     )
     order: Order | None = Field(
         None,
-        description="""Order sorted tasks ascending or descending by the SortBy value. 
+        description="""Order sorted tasks ascending or descending by the SortBy value.
         If None, uses default sort order""",
     )
 

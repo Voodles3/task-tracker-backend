@@ -27,4 +27,4 @@ async def test_separate_apps_do_not_share_in_memory_state(
         list_response = await second_client.get("/api/v1/tasks/")
 
     assert list_response.status_code == 200
-    assert list_response.json() == []
+    assert list_response.json() == {"count": 0, "tasks": []}
