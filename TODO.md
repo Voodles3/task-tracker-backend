@@ -22,17 +22,17 @@
 - Step 3: Add task lists/projects
 - ✅ Add a `TaskList` or `Project` model with `id`, `name`, `created_at`, and `updated_at`
 - ✅ Add create/update models for lists/projects
-- ⬜ Persist lists/projects alongside tasks in JSON save data
-- ⬜ Add list/project repository behavior for create, get all, get by id, update, and delete
-- ⬜ Add list/project API routes:
+- ✅ Persist lists/projects alongside tasks in JSON save data
+- ✅ Add list/project repository behavior for create, get all, get by id, update, and delete
+- ✅ Add list/project API routes:
   - `GET /api/v1/lists/health`
   - `GET /api/v1/lists/`
   - `GET /api/v1/lists/{list_id}`
   - `POST /api/v1/lists/`
   - `PATCH /api/v1/lists/{list_id}`
   - `DELETE /api/v1/lists/{list_id}`
-- ⬜ Add `list_id: int | None` to `Task`
-- ⬜ Allow `TaskCreate` and `TaskUpdate` to set or clear `list_id`
+- ✅ Add `list_id: int | None` to `Task`
+- ✅ Allow `TaskCreate` and `TaskUpdate` to set or clear `list_id`
 - ⬜ Validate task `list_id` references an existing list/project when provided
 - ⬜ Return a clear `404` when creating or moving a task to a missing list/project
 - ⬜ Add `list_id` to `TaskQueryParams`

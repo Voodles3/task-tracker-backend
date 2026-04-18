@@ -2,9 +2,10 @@ import os
 from pathlib import Path
 
 import pytest
+from app.core.errors import StorageError
 from app.db.storage import JSONFileStorage
 from app.main import create_app
-from app.models.storage import JSONSaveData, StorageError, TaskListMap, TaskMap
+from app.models.storage import JSONSaveData, TaskListMap, TaskMap
 from tests.helpers import create_test_client
 
 

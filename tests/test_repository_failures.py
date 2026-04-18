@@ -1,12 +1,12 @@
 from datetime import UTC, datetime
 
 import pytest
+from app.core.errors import StorageError
 from app.db.context import RepositoryContext
-from app.db.repository import TaskRepository
+from app.db.task_repository import TaskRepository
 from app.models.storage import (
     JSONSaveData,
     StorageAdapter,
-    StorageError,
     TaskListMap,
     TaskMap,
 )

@@ -3,10 +3,10 @@ import os
 from pathlib import Path
 
 from app.core.config import config
+from app.core.errors import StorageError
 from app.models.storage import (
     JSONSaveData,
     StorageAdapter,
-    StorageError,
 )
 
 

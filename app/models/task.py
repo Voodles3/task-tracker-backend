@@ -107,6 +107,9 @@ class Task(BaseModel):
     completed_at: AwareDatetime | None = Field(
         None, description="When the task was completed"
     )
+    list_id: int | None = Field(
+        None, description="The ID of the list this task belongs to"
+    )
 
 
 class GetTasksResult(BaseModel):
@@ -126,6 +129,7 @@ class TaskCreate(BaseModel):
     description: str | None = None
     priority: Priority = Priority.UNSET
     due_date: AwareDatetime | None = None
+    list_id: int | None = None
 
 
 class TaskUpdate(BaseModel):
@@ -134,3 +138,4 @@ class TaskUpdate(BaseModel):
     priority: Priority | None = None
     due_date: AwareDatetime | None = None
     completed: bool | None = None
+    list_id: int | None = None

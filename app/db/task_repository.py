@@ -3,10 +3,11 @@ from datetime import UTC, datetime
 from logging import getLogger
 from operator import attrgetter
 
-from app.db.context import RepositoryContext
-from app.models.storage import (
+from app.core.errors import (
+    ListNotFoundError,
     StorageError,
 )
+from app.db.context import RepositoryContext
 from app.models.task import (
     GetTasksResult,
     Order,
@@ -30,6 +31,11 @@ class TaskRepository:
         """Creates and stores a new Task"""
         with self._context.lock:
             state = self._context.state
+
+            list_id = task_create.list_id
+            if list_id is not None and list_id not in state.lists:
+                raise ListNotFoundError(list_id)
+
             cached_state = state.model_copy(deep=True)
 
             task_id = state.next_task_id
@@ -181,6 +187,11 @@ class TaskRepository:
                     if updates["due_date"] is not None
                     else None
                 )
+
+            if "list_id" in updates:
+                list_id = updates["list_id"]
+                if list_id is not None and list_id not in state.lists:
+                    raise ListNotFoundError(list_id)
 
             if updates.get("completed") is True and original_task.completed is False:
                 updates["completed_at"] = now

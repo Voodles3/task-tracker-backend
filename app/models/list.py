@@ -1,6 +1,3 @@
-from enum import Enum
-from typing import Annotated
-
 from pydantic import AwareDatetime, BaseModel, Field
 
 
@@ -11,9 +8,9 @@ class TaskList(BaseModel):
     updated_at: AwareDatetime = Field(..., description="When the list was last updated")
 
 
-class ListCreate(BaseModel):
+class TaskListCreate(BaseModel):
     name: str
 
 
-class ListUpdate(BaseModel):
+class TaskListUpdate(BaseModel):
     name: str | None = None

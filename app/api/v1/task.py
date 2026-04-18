@@ -1,6 +1,6 @@
 from logging import getLogger
 
-from app.db.repository import TaskRepository
+from app.db.task_repository import TaskRepository
 from app.models.task import Task, TaskCreate, TaskQueryParams, TasksResponse, TaskUpdate
 from fastapi import APIRouter, Depends, HTTPException, status
 
