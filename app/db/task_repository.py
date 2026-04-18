@@ -132,7 +132,10 @@ class TaskRepository:
         due_before = query_params.due_before
         due_after = query_params.due_after
         query = query_params.q
+        list_id = query_params.list_id
 
+        if list_id is not None and task.list_id != list_id:
+            return False
         if completed is not None and task.completed != completed:
             return False
         if priority is not None and task.priority != priority:

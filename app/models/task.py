@@ -73,7 +73,7 @@ class TaskQueryParams(BaseModel):
         Field(
             description="""
             Order sorted tasks ascending or descending by the SortBy value.
-            If None, uses default sort order""",
+            If None, uses default sort order"""
         ),
     ] = None
 
@@ -83,6 +83,11 @@ class TaskQueryParams(BaseModel):
     offset: Annotated[
         int, Field(ge=0, description="The index from which to start displaying results")
     ] = 0
+
+    list_id: Annotated[
+        int | None,
+        Field(ge=1, description="The id of the list to which this Task must belong"),
+    ] = None
 
 
 class Task(BaseModel):
