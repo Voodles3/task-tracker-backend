@@ -10,5 +10,11 @@ class ListHasTasksError(Exception):
         super().__init__(f"TaskList with id {list_id} still has tasks")
 
 
+class DuplicateTaskListNameError(Exception):
+    def __init__(self, list_name: str) -> None:
+        self.list_name = list_name
+        super().__init__(f"TaskList with name {list_name} already exists")
+
+
 class StorageError(Exception):
     pass

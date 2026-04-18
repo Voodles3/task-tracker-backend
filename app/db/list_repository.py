@@ -1,9 +1,10 @@
 from datetime import UTC, datetime
 from logging import getLogger
 
-from app.core.errors import ListHasTasksError, StorageError
+from app.core.errors import DuplicateTaskListNameError, ListHasTasksError, StorageError
 from app.db.context import RepositoryContext
 from app.models.list import TaskList, TaskListCreate, TaskListUpdate
+from app.models.storage import JSONSaveData
 
 logger = getLogger(__name__)
 
@@ -18,6 +19,9 @@ class TaskListRepository:
             state = self._context.state
             cached_state = state.model_copy(deep=True)
 
+            if not self._list_name_unique(state, list_create.name):
+                raise DuplicateTaskListNameError(list_create.name)
+
             task_list_id = state.next_list_id
             now = datetime.now(UTC)
             task_list = TaskList(
@@ -27,6 +31,7 @@ class TaskListRepository:
                 updated_at=now,
             )
             state.lists[task_list_id] = task_list
+
             try:
                 state.next_list_id += 1
                 self._context.save()
@@ -63,6 +68,10 @@ class TaskListRepository:
             original_task_list = state.lists.get(task_list_id)
             if original_task_list is None:
                 return None
+
+            name = task_list_update.name
+            if name is not None and not self._list_name_unique(state, name):
+                raise DuplicateTaskListNameError(name)
 
             now = datetime.now(UTC)
             updates = task_list_update.model_dump(exclude_unset=True)
@@ -120,3 +129,6 @@ class TaskListRepository:
                 state.lists = original_task_lists
                 raise StorageError("Failed to save all task lists deletion") from e
             return True
+
+    def _list_name_unique(self, state: JSONSaveData, list_name: str) -> bool:
+        return all(task_list.name != list_name for task_list in state.lists.values())

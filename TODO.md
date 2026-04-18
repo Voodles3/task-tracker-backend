@@ -33,11 +33,11 @@
   - `DELETE /api/v1/lists/{list_id}`
 - ✅ Add `list_id: int | None` to `Task`
 - ✅ Allow `TaskCreate` and `TaskUpdate` to set or clear `list_id`
-- ⬜ Validate task `list_id` references an existing list/project when provided
-- ⬜ Return a clear `404` when creating or moving a task to a missing list/project
-- ⬜ Add `list_id` to `TaskQueryParams`
-- ⬜ Filter `GET /api/v1/tasks/` by `list_id`
-- ⬜ Reject deleting a list/project while it still has tasks
+- ✅ Validate task `list_id` references an existing list/project when provided
+- ✅ Return a clear `404` when creating or moving a task to a missing list/project
+- ✅ Add `list_id` to `TaskQueryParams`
+- ✅ Filter `GET /api/v1/tasks/` by `list_id`
+- ✅ Reject deleting a list/project while it still has tasks
 - ⬜ Add tests for list/project CRUD
 - ⬜ Add tests for task creation/update with valid, missing, and cleared `list_id`
 - ⬜ Add tests for filtering tasks by `list_id`

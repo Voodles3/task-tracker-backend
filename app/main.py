@@ -3,7 +3,12 @@ from pathlib import Path
 
 from app.api.v1.list import create_task_list_router
 from app.api.v1.task import create_task_router
-from app.core.errors import ListHasTasksError, ListNotFoundError, StorageError
+from app.core.errors import (
+    DuplicateTaskListNameError,
+    ListHasTasksError,
+    ListNotFoundError,
+    StorageError,
+)
 from app.core.logging import setup_logging
 from app.db.context import RepositoryContext
 from app.db.list_repository import TaskListRepository
@@ -68,6 +73,15 @@ def create_app(data_file_path: Path | None = None) -> FastAPI:
                 "detail": f"Cannot delete TaskList with id {e.list_id}: "
                 "task list has tasks"
             },
+        )
+
+    @app.exception_handler(DuplicateTaskListNameError)
+    async def duplicate_list_name_handler(
+        request: Request, e: DuplicateTaskListNameError
+    ) -> JSONResponse:
+        return JSONResponse(
+            status_code=409,
+            content={"detail": f"TaskList with name {e.list_name} already exists"},
         )
 
     return app
