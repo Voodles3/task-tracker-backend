@@ -7,6 +7,7 @@ from httpx import AsyncClient
 
 type TaskResponsePayload = dict[str, object]
 type TasksResponsePayload = dict[str, object]
+type TaskListResponsePayload = dict[str, object]
 
 
 def create_test_client(app: FastAPI) -> AsyncClient:
@@ -38,6 +39,24 @@ def assert_task_shape(
 
     created_at = task["created_at"]
     updated_at = task["updated_at"]
+
+    assert isinstance(created_at, str)
+    assert isinstance(updated_at, str)
+    assert datetime.fromisoformat(created_at).tzinfo is not None
+    assert datetime.fromisoformat(updated_at).tzinfo is not None
+
+
+def assert_task_list_shape(
+    task_list: TaskListResponsePayload,
+    *,
+    expected_id: int,
+    expected_name: str,
+) -> None:
+    assert task_list["id"] == expected_id
+    assert task_list["name"] == expected_name
+
+    created_at = task_list["created_at"]
+    updated_at = task_list["updated_at"]
 
     assert isinstance(created_at, str)
     assert isinstance(updated_at, str)
