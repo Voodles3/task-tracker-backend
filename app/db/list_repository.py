@@ -70,7 +70,9 @@ class TaskListRepository:
                 return None
 
             name = task_list_update.name
-            if name is not None and not self._list_name_unique(state, name):
+            if name is not None and not self._list_name_unique(
+                state, name, exclude_list_id=task_list_id
+            ):
                 raise DuplicateTaskListNameError(name)
 
             now = datetime.now(UTC)
@@ -130,5 +132,15 @@ class TaskListRepository:
                 raise StorageError("Failed to save all task lists deletion") from e
             return True
 
-    def _list_name_unique(self, state: JSONSaveData, list_name: str) -> bool:
-        return all(task_list.name != list_name for task_list in state.lists.values())
+    def _list_name_unique(
+        self, state: JSONSaveData, list_name: str, *, exclude_list_id: int | None = None
+    ) -> bool:
+        normalized_name = list_name.casefold()
+
+        for task_list in state.lists.values():
+            if task_list.id == exclude_list_id:
+                continue
+            if task_list.name.casefold() != normalized_name:
+                continue
+            return False
+        return True
