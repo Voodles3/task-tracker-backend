@@ -2,18 +2,24 @@ import os
 from pathlib import Path
 
 import pytest
-from app.db.storage import JSONFileTaskStorage
+from app.db.storage import JSONFileStorage
 from app.main import create_app
-from app.models.storage import JSONSaveData, StorageError, TaskMap
+from app.models.storage import JSONSaveData, StorageError, TaskListMap, TaskMap
 from tests.helpers import create_test_client
 
 
 def test_storage_save_raises_storage_error_when_replace_fails(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    storage = JSONFileTaskStorage(data_file_path=tmp_path / "tasks.json")
+    storage = JSONFileStorage(data_file_path=tmp_path / "tasks.json")
     empty_tasks: TaskMap = {}
-    payload = JSONSaveData(next_id=1, tasks=empty_tasks)
+    empty_lists: TaskListMap = {}
+    payload = JSONSaveData(
+        next_task_id=1,
+        next_list_id=1,
+        tasks=empty_tasks,
+        lists=empty_lists,
+    )
 
     def failing_replace(src: object, dst: object) -> None:
         raise OSError("replace failed")
@@ -28,7 +34,7 @@ def test_storage_load_raises_storage_error_for_malformed_json(tmp_path: Path) ->
     file_path = tmp_path / "tasks.json"
     file_path.write_text("{not valid json", encoding="utf-8")
 
-    storage = JSONFileTaskStorage(data_file_path=file_path)
+    storage = JSONFileStorage(data_file_path=file_path)
     with pytest.raises(StorageError, match="Error decoding save file JSON"):
         storage.load()
 
@@ -39,9 +45,15 @@ def test_storage_uses_config_default_path_when_none_is_provided(
     default_file_path = tmp_path / "data" / "tasks.json"
     monkeypatch.setattr("app.db.storage.config.data_file_path", default_file_path)
 
-    storage = JSONFileTaskStorage()
+    storage = JSONFileStorage()
     empty_tasks: TaskMap = {}
-    payload = JSONSaveData(next_id=1, tasks=empty_tasks)
+    empty_lists: TaskListMap = {}
+    payload = JSONSaveData(
+        next_task_id=1,
+        next_list_id=1,
+        tasks=empty_tasks,
+        lists=empty_lists,
+    )
 
     storage.save(payload)
 
@@ -52,10 +64,10 @@ def test_storage_uses_config_default_path_when_none_is_provided(
 async def test_app_returns_500_on_storage_error(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def failing_save(self: JSONFileTaskStorage, data: JSONSaveData) -> None:
+    def failing_save(self: JSONFileStorage, data: JSONSaveData) -> None:
         raise RuntimeError("disk full")
 
-    monkeypatch.setattr(JSONFileTaskStorage, "save", failing_save)
+    monkeypatch.setattr(JSONFileStorage, "save", failing_save)
 
     app = create_app(data_file_path=tmp_path / "tasks.json")
     async with create_test_client(app) as client:
@@ -72,10 +84,10 @@ async def test_app_returns_500_on_storage_error(
 async def test_app_debug_mode_includes_storage_error_details(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    def failing_save(self: JSONFileTaskStorage, data: JSONSaveData) -> None:
+    def failing_save(self: JSONFileStorage, data: JSONSaveData) -> None:
         raise RuntimeError("disk full")
 
-    monkeypatch.setattr(JSONFileTaskStorage, "save", failing_save)
+    monkeypatch.setattr(JSONFileStorage, "save", failing_save)
     app = create_app(data_file_path=tmp_path / "tasks.json")
     app.debug = True
     async with create_test_client(app) as client:

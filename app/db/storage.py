@@ -10,7 +10,7 @@ from app.models.storage import (
 )
 
 
-class JSONFileTaskStorage(StorageAdapter):
+class JSONFileStorage(StorageAdapter):
     def __init__(self, data_file_path: Path | None = None) -> None:
         self._data_file_path = data_file_path or config.data_file_path
 
@@ -36,9 +36,26 @@ class JSONFileTaskStorage(StorageAdapter):
         try:
             with (self._data_file_path).open("r", encoding="utf-8") as f:
                 raw = json.load(f)
-                return JSONSaveData.model_validate(raw)
+                migrated = self.migrate_save_data(raw)
+                return JSONSaveData.model_validate(migrated)
 
         except FileNotFoundError as error:
             raise FileNotFoundError("Save file not found") from error
         except json.JSONDecodeError as e:
             raise StorageError("Error decoding save file JSON") from e
+
+    def migrate_save_data(self, raw: dict[str, object]) -> dict[str, object]:
+        version = raw.get("schema_version", 1)
+
+        if version == 1:
+            return {
+                "schema_version": 2,
+                "next_task_id": raw["next_id"],
+                "next_list_id": 1,
+                "tasks": raw.get("tasks", {}),
+                "lists": {},
+            }
+        elif version == 2:
+            return raw
+
+        raise StorageError(f"Unsupported save schema version: {version}")

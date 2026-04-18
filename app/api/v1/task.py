@@ -8,7 +8,7 @@ logger = getLogger(__name__)
 
 
 def create_task_router(
-    session: TaskRepository,
+    task_repo: TaskRepository,
 ) -> APIRouter:
     router = APIRouter(prefix="/api/v1/tasks", tags=["Tasks"])
 
@@ -18,7 +18,7 @@ def create_task_router(
 
     @router.get("/", response_model=TasksResponse)
     async def get_all_tasks(query_params: TaskQueryParams = Depends()) -> TasksResponse:
-        res = session.get_all_tasks(query_params)
+        res = task_repo.get_all_tasks(query_params)
         return TasksResponse(
             total=res.total,
             count=res.count,
@@ -29,7 +29,7 @@ def create_task_router(
 
     @router.get("/{task_id}", response_model=Task)
     async def get_task(task_id: int) -> Task:
-        task = session.get_task_by_id(task_id)
+        task = task_repo.get_task_by_id(task_id)
         if task is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -39,14 +39,14 @@ def create_task_router(
 
     @router.post("/", status_code=status.HTTP_201_CREATED, response_model=Task)
     async def create_task(task: TaskCreate) -> Task:
-        return session.create_task(task)
+        return task_repo.create_task(task)
 
     @router.patch("/{task_id}", response_model=Task)
     async def update_task(
         task_id: int,
         task_update: TaskUpdate,
     ) -> Task:
-        task = session.update_task(task_id, task_update)
+        task = task_repo.update_task(task_id, task_update)
         if task is None:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -56,11 +56,11 @@ def create_task_router(
 
     @router.delete("/", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_all_tasks() -> None:
-        session.delete_all_tasks()
+        task_repo.delete_all_tasks()
 
     @router.delete("/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
     async def delete_task(task_id: int) -> None:
-        if not session.delete_task(task_id):
+        if not task_repo.delete_task(task_id):
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail=f"Cannot delete task with id {task_id}: task not found",

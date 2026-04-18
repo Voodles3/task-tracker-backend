@@ -1,8 +1,15 @@
 from datetime import UTC, datetime
 
 import pytest
+from app.db.context import RepositoryContext
 from app.db.repository import TaskRepository
-from app.models.storage import JSONSaveData, StorageAdapter, StorageError, TaskMap
+from app.models.storage import (
+    JSONSaveData,
+    StorageAdapter,
+    StorageError,
+    TaskListMap,
+    TaskMap,
+)
 from app.models.task import TaskCreate, TaskUpdate
 
 
@@ -14,8 +21,16 @@ class ControlledStorage(StorageAdapter):
         fail_on_save: bool = False,
     ) -> None:
         empty_tasks: TaskMap = {}
+        empty_lists: TaskListMap = {}
         self._data: JSONSaveData = (
-            data if data is not None else JSONSaveData(next_id=1, tasks=empty_tasks)
+            data
+            if data is not None
+            else JSONSaveData(
+                next_task_id=1,
+                next_list_id=1,
+                tasks=empty_tasks,
+                lists=empty_lists,
+            )
         )
         self._fail_on_save: bool = fail_on_save
 
@@ -33,7 +48,7 @@ class ControlledStorage(StorageAdapter):
 
 def _build_seeded_repo() -> tuple[TaskRepository, ControlledStorage]:
     storage = ControlledStorage()
-    repository = TaskRepository(storage=storage)
+    repository = TaskRepository(context=RepositoryContext(storage=storage))
     repository.create_task(TaskCreate(title="First", description="one"))
     repository.create_task(TaskCreate(title="Second", description="two"))
     return repository, storage
@@ -41,7 +56,7 @@ def _build_seeded_repo() -> tuple[TaskRepository, ControlledStorage]:
 
 def test_create_task_rolls_back_state_when_save_fails() -> None:
     storage = ControlledStorage(fail_on_save=True)
-    repository = TaskRepository(storage=storage)
+    repository = TaskRepository(context=RepositoryContext(storage=storage))
 
     with pytest.raises(StorageError, match="Error creating new task"):
         repository.create_task(TaskCreate(title="new", description="task"))
@@ -51,7 +66,7 @@ def test_create_task_rolls_back_state_when_save_fails() -> None:
     assert result.count == 0
     assert result.total == 0
 
-    # Ensure next_id rollback happened: first successful create should still be ID 1.
+    # Ensure next_task_id rollback happened: first successful create is still ID 1.
     storage.set_fail_on_save(False)
     created_task = repository.create_task(TaskCreate(title="works", description=None))
     assert created_task.id == 1
@@ -97,7 +112,7 @@ def test_delete_all_tasks_rolls_back_state_when_save_fails() -> None:
 
 
 def test_update_task_allows_explicit_due_date_clearing() -> None:
-    repository = TaskRepository(storage=ControlledStorage())
+    repository = TaskRepository(context=RepositoryContext(storage=ControlledStorage()))
     created = repository.create_task(
         TaskCreate(
             title="has due date",

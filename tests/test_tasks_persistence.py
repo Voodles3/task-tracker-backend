@@ -213,7 +213,10 @@ async def test_create_task_writes_expected_json_file(
     saved_payload = json.loads(restartable_file_path.read_text(encoding="utf-8"))
     task = saved_payload["tasks"]["1"]
 
-    assert saved_payload["next_id"] == 2
+    assert saved_payload["schema_version"] == 2
+    assert saved_payload["next_task_id"] == 2
+    assert saved_payload["next_list_id"] == 1
+    assert saved_payload["lists"] == {}
     assert_task_shape(
         task,
         expected_id=1,

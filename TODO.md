@@ -7,8 +7,8 @@
 - ✅ Keep `DELETE /tasks/{task_id}` behavior as `204` on success and `404` if missing
 - ✅ Save dates and datetimes in JSON-safe ISO format
 - ✅ Add tests for create defaults, `updated_at` changes, and `completed_at` behavior
--
-- 
+<br><br><br>
+
 - Step 2: Make `GET /tasks` frontend-ready
 - ✅ Add optional filters for `completed`, `priority`, `due_before`, and `due_after`
 - ✅ Add `q` search across title and description
@@ -17,3 +17,29 @@
 - ✅ Keep endpoint thin and move list/query logic into the store/service layer
 - ✅ Keep the response as `list[Task]` unless pagination metadata is actually needed
 - ✅ Add tests for filtering, search, sorting, and pagination
+<br><br><br>
+
+- Step 3: Add task lists/projects
+- ✅ Add a `TaskList` or `Project` model with `id`, `name`, `created_at`, and `updated_at`
+- ✅ Add create/update models for lists/projects
+- ⬜ Persist lists/projects alongside tasks in JSON save data
+- ⬜ Add list/project repository behavior for create, get all, get by id, update, and delete
+- ⬜ Add list/project API routes:
+  - `GET /api/v1/lists/health`
+  - `GET /api/v1/lists/`
+  - `GET /api/v1/lists/{list_id}`
+  - `POST /api/v1/lists/`
+  - `PATCH /api/v1/lists/{list_id}`
+  - `DELETE /api/v1/lists/{list_id}`
+- ⬜ Add `list_id: int | None` to `Task`
+- ⬜ Allow `TaskCreate` and `TaskUpdate` to set or clear `list_id`
+- ⬜ Validate task `list_id` references an existing list/project when provided
+- ⬜ Return a clear `404` when creating or moving a task to a missing list/project
+- ⬜ Add `list_id` to `TaskQueryParams`
+- ⬜ Filter `GET /api/v1/tasks/` by `list_id`
+- ⬜ Reject deleting a list/project while it still has tasks
+- ⬜ Add tests for list/project CRUD
+- ⬜ Add tests for task creation/update with valid, missing, and cleared `list_id`
+- ⬜ Add tests for filtering tasks by `list_id`
+- ⬜ Add tests for rejecting list/project deletion while tasks still reference it
+- ⬜ Update README with list/project routes and task `list_id` behavior
